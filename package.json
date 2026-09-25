@@ -1,0 +1,12 @@
+{
+  "name": "vadium",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node tests/vadium.test.mjs",
+    "compile": "node scripts/compile.mjs",
+    "deploy:demo": "node scripts/deploy-demo.mjs",
+    "publish:risk": "node scripts/publish-risk.mjs",
+    "build": "node scripts/verify-web.mjs"
+  }
+}
