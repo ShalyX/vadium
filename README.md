@@ -9,7 +9,7 @@ Vadium is a session-aware lending market for tokenized equities on X Layer. It c
 - Demo AAPLx: [`0x235b537e0bc3549959E0aebf5528d8677E43FB02`](https://www.okx.com/web3/explorer/xlayer-test/address/0x235b537e0bc3549959E0aebf5528d8677E43FB02)
 - Demo dUSD: [`0x588eb96429A3c22f22848185F2b5FfD08AdfD8Ae`](https://www.okx.com/web3/explorer/xlayer-test/address/0x588eb96429A3c22f22848185F2b5FfD08AdfD8Ae)
 
-The pool was initialized with 50,000 dUSD of test liquidity. The latest oracle update intentionally reports `Unavailable`: the saved AAPL observation exceeded the six-hour freshness limit and the live OKX refresh was unreachable. This demonstrates Vadium's fail-closed path without presenting stale data as live.
+The pool was initialized with 50,000 dUSD of test liquidity. The latest oracle update reports the reference market as `Open`, with full freshness and liquidity at 200% of the ticker's historical hour-of-week baseline. Vadium caps the effective credit multiplier at 100%.
 
 ## MVP scope
 
