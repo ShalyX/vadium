@@ -13,7 +13,7 @@ function loadEnv(file) {
   if (!fs.existsSync(file)) return;
   for (const line of fs.readFileSync(file, 'utf8').split(/\r?\n/)) {
     const match = line.match(/^([A-Z][A-Z0-9_]*)=(.*)$/);
-    if (match && !process.env[match[1]]) process.env[match[1]] = match[2].trim();
+    if (match && match[2].trim()) process.env[match[1]] = match[2].trim().replace(/^['"]|['"]$/g, '');
   }
 }
 

@@ -2,9 +2,11 @@
 window.VADIUM_CONFIG = Object.freeze({
   "chainId": 1952,
   "rpcUrl": "https://testrpc.xlayer.tech/terigon",
+  "rpcFallbackUrls": ["https://xlayertestrpc.okx.com/terigon"],
   "explorer": "https://www.okx.com/web3/explorer/xlayer-test",
   "pool": "0xE74520d6B698b5Cc61c57152314c46933547751B",
   "oracle": "0xbC3b450c649Fb3020AE1C692b502BF85d6cD390a",
   "stable": "0x588eb96429A3c22f22848185F2b5FfD08AdfD8Ae",
-  "collateral": "0x235b537e0bc3549959E0aebf5528d8677E43FB02"
+  "collateral": "0x235b537e0bc3549959E0aebf5528d8677E43FB02",
+  "demoAssets": true
 });

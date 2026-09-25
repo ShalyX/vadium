@@ -6,4 +6,6 @@ public/
 deployments/*.local.json
 
 .vercel
+.npm-cache/
+.playwright-cli/
 .env*
