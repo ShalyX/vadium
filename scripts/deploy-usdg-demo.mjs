@@ -1,12 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { createRequire } from 'node:module';
+import { ethers } from 'ethers';
+import solc from 'solc';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const require = createRequire(path.resolve(root, '../work/contract-review/package.json'));
-const solc = require('solc');
-const { ethers } = require('ethers');
 
 if (process.env.RUN_VADIUM_MAINNET !== '1') {
   throw new Error('Set RUN_VADIUM_MAINNET=1 to deploy the USDG demo on X Layer mainnet');
@@ -59,6 +57,7 @@ const pool = await deploy('VadiumPool.sol', 'VadiumPool', [
   usdgAddress,
   await stock.getAddress(),
   await oracle.getAddress(),
+  ethers.ZeroAddress,
   6_500,
   8_000,
   7_500,

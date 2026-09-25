@@ -1,11 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { createRequire } from 'node:module';
+import solc from 'solc';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-const require = createRequire(path.resolve(here, '../../work/contract-review/package.json'));
-const solc = require('solc');
 const contractsDir = path.resolve(here, '../contracts');
 const sources = Object.fromEntries(
   fs.readdirSync(contractsDir).map((name) => [name, { content: fs.readFileSync(path.join(contractsDir, name), 'utf8') }]),

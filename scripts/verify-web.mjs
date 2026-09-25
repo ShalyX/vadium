@@ -13,5 +13,7 @@ assert.match(html, /src\/app\.js/);
 assert.match(html, /src\/style\.css/);
 const app = fs.readFileSync(path.join(root, 'src/app.js'), 'utf8');
 assert.match(app, /window\.VADIUM_CONFIG/);
+assert.match(app, /\.\.\/vendor\/ethers\.min\.js/);
+assert.doesNotMatch(app, /https:\/\/cdn\./);
 assert.doesNotMatch(app, /PRIVATE_KEY|API_SECRET|PASSPHRASE/);
 console.log('Static web build verified.');

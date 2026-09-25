@@ -1,11 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { createRequire } from 'node:module';
+import { ethers } from 'ethers';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const require = createRequire(path.resolve(root, '../work/contract-review/package.json'));
-const { ethers } = require('ethers');
 
 if (process.env.RUN_VADIUM_MAINNET !== '1') {
   throw new Error('Set RUN_VADIUM_MAINNET=1 to execute the real-USDG mainnet demo');

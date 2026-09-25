@@ -10,6 +10,16 @@
     "demo:loan": "node scripts/run-loan-demo.mjs",
     "demo:usdg": "node scripts/run-usdg-loan-demo.mjs",
     "publish:risk": "node scripts/publish-risk.mjs",
-    "build": "node scripts/build-web.mjs"
+    "verify:assets": "node scripts/verify-mainnet-assets.mjs",
+    "build": "node scripts/build-web.mjs",
+    "dev": "node scripts/build-web.mjs && node scripts/serve.mjs",
+    "check": "npm run test && npm run compile && npm run build"
+  },
+  "dependencies": {
+    "ethers": "6.17.0"
+  },
+  "devDependencies": {
+    "ganache": "7.9.2",
+    "solc": "0.8.26"
   }
 }

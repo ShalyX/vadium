@@ -13,6 +13,12 @@ interface IERC20Metadata is IERC20 {
     function decimals() external view returns (uint8);
 }
 
+interface IERC4626Collateral {
+    function asset() external view returns (address);
+    function convertToAssets(uint256 shares) external view returns (uint256);
+    function convertToShares(uint256 assets) external view returns (uint256);
+}
+
 /// @title VadiumPool
 /// @notice An isolated lending pool for one tokenized equity and one stable asset.
 /// @dev Session and confidence data only constrain risk-increasing actions. The
@@ -22,9 +28,11 @@ contract VadiumPool {
 
     IERC20 public immutable stable;
     IERC20 public immutable collateral;
+    address public immutable underlyingCollateral;
     MarketRiskOracle public immutable oracle;
     uint8 public immutable stableDecimals;
     uint8 public immutable collateralDecimals;
+    uint8 public immutable underlyingDecimals;
 
     uint16 public immutable baseBorrowLtvBps;
     uint16 public immutable liquidationLtvBps;
@@ -33,6 +41,11 @@ contract VadiumPool {
     uint16 public immutable minLiquidityBps;
     uint16 public immutable liquidationBonusBps;
     uint256 public immutable debtCeiling;
+
+    address public owner;
+    address public pendingOwner;
+    bool public borrowPaused;
+    bool public supplyPaused;
 
     uint256 public totalLiquidityShares;
     uint256 public totalDebt;
@@ -49,6 +62,9 @@ contract VadiumPool {
     event Borrowed(address indexed borrower, uint256 amount);
     event Repaid(address indexed borrower, uint256 amount);
     event Liquidated(address indexed borrower, address indexed liquidator, uint256 repaid, uint256 seized);
+    event RiskPauseSet(bool borrowPaused, bool supplyPaused);
+    event OwnershipTransferStarted(address indexed owner, address indexed pendingOwner);
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
     error InvalidConfiguration();
     error ZeroAmount();
@@ -59,7 +75,11 @@ contract VadiumPool {
     error DebtCeilingExceeded();
     error HealthyPosition();
     error TransferFailed();
+    error UnexpectedTransferAmount();
     error Reentrancy();
+    error Paused();
+    error NotOwner();
+    error NotPendingOwner();
 
     modifier nonReentrant() {
         if (unlocked != 1) revert Reentrancy();
@@ -68,10 +88,16 @@ contract VadiumPool {
         unlocked = 1;
     }
 
+    modifier onlyOwner() {
+        if (msg.sender != owner) revert NotOwner();
+        _;
+    }
+
     constructor(
         address stable_,
         address collateral_,
         address oracle_,
+        address underlyingCollateral_,
         uint16 baseBorrowLtvBps_,
         uint16 liquidationLtvBps_,
         uint16 closedSessionFactorBps_,
@@ -82,6 +108,7 @@ contract VadiumPool {
     ) {
         if (
             stable_ == address(0) || collateral_ == address(0) || oracle_ == address(0)
+                || stable_ == collateral_
                 || baseBorrowLtvBps_ == 0 || baseBorrowLtvBps_ >= liquidationLtvBps_
                 || liquidationLtvBps_ > BPS || closedSessionFactorBps_ > BPS
                 || minFreshnessBps_ > BPS || minLiquidityBps_ > 20_000
@@ -93,6 +120,19 @@ contract VadiumPool {
         oracle = MarketRiskOracle(oracle_);
         stableDecimals = IERC20Metadata(stable_).decimals();
         collateralDecimals = IERC20Metadata(collateral_).decimals();
+        underlyingCollateral = underlyingCollateral_;
+        if (underlyingCollateral_ != address(0)) {
+            if (underlyingCollateral_ == collateral_ || IERC4626Collateral(collateral_).asset() != underlyingCollateral_) {
+                revert InvalidConfiguration();
+            }
+            underlyingDecimals = IERC20Metadata(underlyingCollateral_).decimals();
+            if (IERC4626Collateral(collateral_).convertToAssets(10 ** collateralDecimals) == 0) {
+                revert InvalidConfiguration();
+            }
+        } else {
+            underlyingDecimals = collateralDecimals;
+        }
+        if (stableDecimals > 18 || collateralDecimals > 18 || underlyingDecimals > 18) revert InvalidConfiguration();
         baseBorrowLtvBps = baseBorrowLtvBps_;
         liquidationLtvBps = liquidationLtvBps_;
         closedSessionFactorBps = closedSessionFactorBps_;
@@ -100,6 +140,28 @@ contract VadiumPool {
         minLiquidityBps = minLiquidityBps_;
         liquidationBonusBps = liquidationBonusBps_;
         debtCeiling = debtCeiling_;
+        owner = msg.sender;
+        emit OwnershipTransferred(address(0), msg.sender);
+    }
+
+    function setRiskPause(bool borrowPaused_, bool supplyPaused_) external onlyOwner {
+        borrowPaused = borrowPaused_;
+        supplyPaused = supplyPaused_;
+        emit RiskPauseSet(borrowPaused_, supplyPaused_);
+    }
+
+    function transferOwnership(address to) external onlyOwner {
+        if (to == address(0)) revert InvalidConfiguration();
+        pendingOwner = to;
+        emit OwnershipTransferStarted(owner, to);
+    }
+
+    function acceptOwnership() external {
+        if (msg.sender != pendingOwner) revert NotPendingOwner();
+        address previous = owner;
+        owner = msg.sender;
+        pendingOwner = address(0);
+        emit OwnershipTransferred(previous, msg.sender);
     }
 
     function totalAssets() public view returns (uint256) {
@@ -107,6 +169,7 @@ contract VadiumPool {
     }
 
     function supply(uint256 assets) external nonReentrant returns (uint256 shares) {
+        if (supplyPaused) revert Paused();
         if (assets == 0) revert ZeroAmount();
         uint256 assetsBefore = totalAssets();
         shares = totalLiquidityShares == 0 ? assets : assets * totalLiquidityShares / assetsBefore;
@@ -148,6 +211,7 @@ contract VadiumPool {
     }
 
     function borrow(uint256 amount) external nonReentrant {
+        if (borrowPaused) revert Paused();
         if (amount == 0) revert ZeroAmount();
         uint256 capacity = borrowCapacity(msg.sender);
         if (capacity == 0) revert RiskUnavailable();
@@ -211,6 +275,7 @@ contract VadiumPool {
             seized = collateralOf[borrower];
             repaid = _collateralValue(seized, risk.price) * BPS / (BPS + liquidationBonusBps);
         }
+        if (repaid == 0 || seized == 0) revert ZeroAmount();
 
         debtOf[borrower] -= repaid;
         totalDebt -= repaid;
@@ -221,7 +286,9 @@ contract VadiumPool {
     }
 
     function _collateralValue(uint256 amount, uint256 price) internal view returns (uint256 value) {
-        uint256 usd18 = amount * price / (10 ** collateralDecimals);
+        uint256 underlyingAmount = underlyingCollateral == address(0)
+            ? amount : IERC4626Collateral(address(collateral)).convertToAssets(amount);
+        uint256 usd18 = underlyingAmount * price / (10 ** underlyingDecimals);
         if (stableDecimals < 18) return usd18 / (10 ** (18 - stableDecimals));
         if (stableDecimals > 18) return usd18 * (10 ** (stableDecimals - 18));
         return usd18;
@@ -231,17 +298,23 @@ contract VadiumPool {
         uint256 usd18 = value;
         if (stableDecimals < 18) usd18 = value * (10 ** (18 - stableDecimals));
         if (stableDecimals > 18) usd18 = value / (10 ** (stableDecimals - 18));
-        amount = usd18 * (10 ** collateralDecimals) / price;
+        uint256 underlyingAmount = usd18 * (10 ** underlyingDecimals) / price;
+        amount = underlyingCollateral == address(0)
+            ? underlyingAmount : IERC4626Collateral(address(collateral)).convertToShares(underlyingAmount);
     }
 
     function _safeTransfer(IERC20 token, address to, uint256 amount) private {
+        uint256 beforeBalance = token.balanceOf(to);
         (bool success, bytes memory data) = address(token).call(abi.encodeCall(IERC20.transfer, (to, amount)));
         if (!success || (data.length != 0 && !abi.decode(data, (bool)))) revert TransferFailed();
+        if (token.balanceOf(to) - beforeBalance != amount) revert UnexpectedTransferAmount();
     }
 
     function _safeTransferFrom(IERC20 token, address from, address to, uint256 amount) private {
+        uint256 beforeBalance = token.balanceOf(to);
         (bool success, bytes memory data) =
             address(token).call(abi.encodeCall(IERC20.transferFrom, (from, to, amount)));
         if (!success || (data.length != 0 && !abi.decode(data, (bool)))) revert TransferFailed();
+        if (token.balanceOf(to) - beforeBalance != amount) revert UnexpectedTransferAmount();
     }
 }

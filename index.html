@@ -26,19 +26,19 @@
           <p class="hero-copy">Borrow against tokenized stocks with credit limits that respond to market hours, stale prices, and thin liquidity.</p>
         </section>
 
-        <section class="demo-notice" aria-label="Demo asset notice">
-          <strong>Interactive testnet prototype</strong>
-          <span>AAPLx and dUSD here are permissionless demo tokens with no real-world value. The separate USDG proof below uses real USDG on X Layer mainnet.</span>
+        <section id="environmentNotice" class="demo-notice" aria-label="Market environment">
+          <strong id="environmentTitle">Interactive testnet prototype</strong>
+          <span id="environmentCopy">AAPLx and dUSD here are permissionless demo tokens with no real-world value. The separate USDG proof below uses real USDG on X Layer mainnet.</span>
         </section>
 
         <section class="start-panel" aria-label="Get started">
-          <div><span class="section-label">START HERE</span><h2>Try the lending flow</h2><p>Connect a wallet on X Layer testnet. Mint demo AAPLx to borrow, or mint demo dUSD to supply liquidity. Need gas? <a href="https://web3.okx.com/xlayer/faucet" target="_blank" rel="noreferrer">Get testnet OKB ↗</a></p></div>
-          <div class="start-actions"><button id="mintStockButton" type="button" disabled>Get 10 demo AAPLx</button><button id="mintStableButton" type="button" disabled>Get 100 demo dUSD</button></div>
+          <div><span class="section-label">START HERE</span><h2 id="startTitle">Try the lending flow</h2><p id="startCopy">Connect a wallet on X Layer testnet. Mint demo AAPLx to borrow, or mint demo dUSD to supply liquidity. Need gas? <a href="https://web3.okx.com/xlayer/faucet" target="_blank" rel="noreferrer">Get testnet OKB ↗</a></p></div>
+          <div id="startActions" class="start-actions"><button id="mintStockButton" type="button" disabled>Get 10 demo AAPLx</button><button id="mintStableButton" type="button" disabled>Get 100 demo dUSD</button></div>
         </section>
 
         <section class="quote-panel" aria-label="Borrowing power preview">
-          <div class="quote-intro"><span class="section-label">BEFORE YOU DEPOSIT</span><h2>Check your borrowing power</h2><p>Enter an AAPLx amount to see how the same collateral is treated while the reference market is open, closed, or unavailable. This uses the latest onchain price and pool settings.</p></div>
-          <label class="quote-field"><span>Demo AAPLx amount</span><input id="quoteAmount" inputmode="decimal" value="1" aria-label="Demo AAPLx amount" /></label>
+          <div class="quote-intro"><span class="section-label">BEFORE YOU DEPOSIT</span><h2>Check your borrowing power</h2><p id="quoteDescription">Enter an AAPLx amount to see how the same collateral is treated while the reference market is open, closed, or unavailable. This uses the latest onchain price and pool settings.</p></div>
+          <label class="quote-field"><span id="quoteLabel">Demo AAPLx amount</span><input id="quoteAmount" inputmode="decimal" value="1" aria-label="Collateral amount" /></label>
           <div class="quote-results"><div><span>Current limit</span><strong id="quoteCurrent">—</strong></div><div><span>If market is open</span><strong id="quoteOpen">—</strong></div><div><span>If market is closed</span><strong id="quoteClosed">—</strong></div><div><span>If data is unavailable</span><strong id="quoteUnavailable">0 dUSD</strong></div></div>
           <p id="quoteNote" class="quote-note">Loading current oracle data…</p>
         </section>
@@ -47,9 +47,9 @@
           <div class="market-header">
             <div class="asset-lockup">
               <div class="asset-icon">A</div>
-              <div><strong id="marketName">AAPLx / dUSD</strong><span>Isolated demo lending market</span></div>
+              <div><strong id="marketName">AAPLx / dUSD</strong><span id="marketDescription">Isolated demo lending market</span></div>
             </div>
-            <div id="marketPill" class="status-pill neutral">WAITING FOR WALLET</div>
+            <div id="marketPill" class="status-pill neutral">LOADING MARKET</div>
           </div>
 
           <div class="market-grid">
@@ -60,8 +60,8 @@
               <div class="metric-row"><span>Collateral</span><strong id="collateralValue">—</strong></div>
               <div class="metric-row"><span>Debt</span><strong id="debtValue">—</strong></div>
               <div class="metric-row"><span>Available credit</span><strong id="capacityValue">—</strong></div>
-              <div class="metric-row"><span>Wallet AAPLx</span><strong id="walletCollateral">—</strong></div>
-              <div class="metric-row"><span>Wallet dUSD</span><strong id="walletStable">—</strong></div>
+              <div class="metric-row"><span id="walletCollateralLabel">Wallet AAPLx</span><strong id="walletCollateral">—</strong></div>
+              <div class="metric-row"><span id="walletStableLabel">Wallet dUSD</span><strong id="walletStable">—</strong></div>
               <div class="metric-row"><span>Liquidity shares</span><strong id="sharesValue">—</strong></div>
 
               <div class="action-tabs" role="tablist">
@@ -79,11 +79,12 @@
                 <button id="maxButton" type="button">MAX</button>
               </label>
               <button id="actionButton" class="primary-action" disabled>Connect wallet</button>
-              <p id="actionMessage" class="action-message" role="status"></p>
+              <p id="actionMessage" class="action-message" role="status" aria-live="polite"></p>
+              <a id="transactionLink" class="transaction-link" href="#" target="_blank" rel="noreferrer" hidden>View transaction on X Layer ↗</a>
             </section>
 
             <aside class="risk-panel">
-              <div class="risk-heading"><span class="section-label">ONCHAIN RISK STATE</span><span id="updatedAt">LOADING</span></div>
+              <div class="risk-heading"><span class="section-label">ONCHAIN RISK STATE</span><div><span id="updatedAt">LOADING</span><button id="refreshButton" type="button" disabled>Refresh</button></div></div>
               <div class="session-state"><span>REFERENCE MARKET</span><strong id="sessionValue">—</strong></div>
               <div class="rail-item">
                 <div><span>Price freshness</span><strong id="freshnessValue">—</strong></div>
@@ -107,11 +108,11 @@
         <section class="proof-strip">
           <div><span>POOL LIQUIDITY</span><strong id="poolLiquidity">—</strong></div>
           <div><span>OUTSTANDING DEBT</span><strong id="poolDebt">—</strong></div>
-          <div><span>BASE LTV</span><strong>65%</strong></div>
-          <div><span>LIQUIDATION LTV</span><strong>80%</strong></div>
+          <div><span>BASE LTV</span><strong id="baseLtvValue">—</strong></div>
+          <div><span>LIQUIDATION LTV</span><strong id="liquidationLtvValue">—</strong></div>
         </section>
 
-        <section class="mainnet-proof" aria-label="Real USDG transaction proof">
+        <section id="mainnetProof" class="mainnet-proof" aria-label="Real USDG transaction proof">
           <span class="section-label">MAINNET PROOF</span>
           <h2>A complete loan using real USDG</h2>
           <p>On X Layer mainnet, the experimental pool supplied 0.01 USDG, borrowed 0.005 USDG, repaid while new borrowing was paused, and withdrew the full supply. Its collateral can be minted by anyone, so do not supply real funds to that pool.</p>
@@ -119,7 +120,7 @@
         </section>
       </main>
 
-      <footer><span>Vadium protocol MVP</span><span>Built on X Layer</span></footer>
+      <footer><span>Vadium</span><span>Built on X Layer</span></footer>
     </div>
     <script src="/deployment-config.js"></script>
     <script type="module" src="/src/app.js"></script>

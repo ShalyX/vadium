@@ -2,6 +2,8 @@
 
 Vadium is a session-aware lending market for tokenized equities on X Layer. It changes the credit available for new risk-taking when the reference market is closed, price data is old, or onchain liquidity is thin. Repayment and collateral top-ups are never disabled, and a session change cannot by itself liquidate an existing position.
 
+**Release target:** a real wrapped xStock / USDG market on X Layer mainnet. The deployed testnet market is for testing. The current mainnet USDG pool uses permissionless demo collateral and is not the release pool. See the [mainnet release plan](docs/mainnet-release.md) for verified asset options, the required wrapper and oracle design, and remaining launch gates.
+
 ## Live X Layer testnet deployment
 
 - Pool: [`0xE74520d6B698b5Cc61c57152314c46933547751B`](https://www.okx.com/web3/explorer/xlayer-test/address/0xE74520d6B698b5Cc61c57152314c46933547751B)
@@ -39,15 +41,15 @@ The demo token contracts are deliberately permissionless faucets. They are not p
 
 ## Verify locally
 
-The workspace already contains the shared `solc`, `ethers`, and Ganache runtime used by the tests.
+Install the pinned dependencies in this repository, then run the full check:
 
 ```bash
-npm test
-npm run compile
-npm run build
+npm ci --ignore-scripts
+npm run check
+npm run verify:assets
 ```
 
-Serve this directory with any static server to inspect the interface. Until `deployment-config.js` contains deployed addresses, the interface clearly reports that it is unconfigured and will not simulate balances or transactions.
+Serve `public/` with any static server, or run `npm run dev` to open the local build at `http://127.0.0.1:4173`. The build copies the pinned Ethers browser module locally, so wallet actions do not depend on a CDN script at runtime. Until `deployment-config.js` contains deployed addresses, the interface clearly reports that it is unconfigured and will not simulate balances or transactions.
 
 ## Deploy the demo to X Layer testnet
 
