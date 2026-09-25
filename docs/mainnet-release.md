@@ -1,6 +1,6 @@
 # Vadium mainnet release plan
 
-**Product target:** separate NVDAx and TSLAx revolving USDG credit lines on X Layer, each secured by the issuer's current non-rebasing wrapper. The [Lombard benchmark](lombard-benchmark.md) defines the full facility requirements. Testnet is for integration and failure testing. The existing X Layer mainnet USDG pool uses mintable demo collateral and is transaction evidence only; it must not receive user funds.
+**Product target:** separate NVDAx and TSLAx revolving USDG credit lines on X Layer, each secured by the issuer's current non-rebasing wrapper. The [credit quality benchmark](credit-quality-benchmark.md) defines the full facility requirements. Testnet is for integration and failure testing. The existing X Layer mainnet USDG pool uses mintable demo collateral and is transaction evidence only; it must not receive user funds.
 
 ## Verified collateral options
 

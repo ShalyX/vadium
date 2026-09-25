@@ -35,7 +35,7 @@ const ui = Object.fromEntries([
   'heroCopy','coverageState','currentLtvValue','liquidationPriceValue','liquidationBufferValue','coverageRail','coverageNote',
   'collateralPrep','prepHeading','wrapperLink','rawBalanceLabel','rawBalance','wrappedBalanceLabel','wrappedBalance',
   'wrapAmount','wrapMax','wrapPreview','wrapButton','unwrapAmount','unwrapMax','unwrapPreview','unwrapButton',
-  'prepMessage','prepTransactionLink',
+  'prepMessage','prepTransactionLink','connectionStatus','workspaceRoot',
 ].map((id) => [id, $(id)]));
 
 let provider;
@@ -101,6 +101,8 @@ async function probeRpc(url) {
 function setMessage(message, error = false) {
   ui.actionMessage.textContent = message;
   ui.actionMessage.style.color = error ? '#ff7a45' : '';
+  ui.connectionStatus.textContent = message;
+  ui.connectionStatus.classList.toggle('error', error);
 }
 
 function showTransaction(hash) {
@@ -123,7 +125,7 @@ function explain(error) {
     try { return pool?.interface?.parseError(error?.data)?.name; }
     catch { return undefined; }
   })();
-  if (error?.code === 4001 || error?.code === 'ACTION_REJECTED') return 'Request rejected in your wallet. No transaction was sent.';
+  if (error?.code === 4001 || error?.code === 'ACTION_REJECTED' || /user rejected/i.test(error?.message || '')) return 'Wallet request cancelled. You can try again whenever you are ready.';
   return {
     RiskUnavailable: 'New borrowing is paused until the oracle has a current usable update.',
     RiskLimit: 'The amount exceeds your current borrowing limit.',
@@ -252,7 +254,8 @@ async function ensureNetwork() {
   try {
     await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: chainHex }] });
   } catch (error) {
-    if (error.code !== 4902) throw error;
+    const unknownChain = error?.code === 4902 || /unrecognized chain|unknown chain|chain.*not added|chain.*does not exist/i.test(error?.message || '');
+    if (!unknownChain) throw error;
     await window.ethereum.request({ method: 'wallet_addEthereumChain', params: [{
       chainId: chainHex,
       chainName: config.chainId === 196 ? 'X Layer' : 'X Layer Testnet',
@@ -263,7 +266,7 @@ async function ensureNetwork() {
 }
 
 async function connect() {
-  if (!window.ethereum) return setMessage('Install an EVM wallet such as OKX Wallet to continue.', true);
+  if (!window.ethereum) return setMessage('No wallet detected. Open Vadium in a browser with OKX Wallet or another EVM wallet installed.', true);
   if (!configured()) return setMessage('Deployment addresses are not configured yet.', true);
   try {
     ui.connectButton.disabled = true;
@@ -271,20 +274,20 @@ async function connect() {
     provider = new BrowserProvider(window.ethereum);
     signer = await provider.getSigner();
     account = await signer.getAddress();
-    writePool = pool.connect(signer);
-    writeStable = stable.connect(signer);
-    writeCollateral = collateral.connect(signer);
-    if (liveMarket()) writeUnderlying = underlying.connect(signer);
+    if (pool) writePool = pool.connect(signer);
+    if (stable) writeStable = stable.connect(signer);
+    if (collateral) writeCollateral = collateral.connect(signer);
+    if (liveMarket() && underlying) writeUnderlying = underlying.connect(signer);
     ui.connectButton.textContent = short(account);
     ui.networkLabel.textContent = config.chainId === 196 ? 'X Layer Mainnet' : 'X Layer Testnet';
     ui.marketName.textContent = `${collateralSymbol} / ${stableSymbol}`;
     ui.oracleLink.href = `${config.explorer}/address/${config.oracle}`;
-    setMessage('Wallet connected. Loading your live position…');
+    setMessage(pool ? 'Wallet connected. Loading your position…' : 'Wallet connected. Market data is still loading; use Refresh if it does not appear.');
     setPending(false);
-    await refresh();
+    if (pool) await refresh();
     if (marketReady) setMessage(writeEnabled() ? 'Wallet connected. Your position is up to date.' : 'Wallet connected. This deployment is read-only.');
   } catch (error) {
-    setMessage(error.shortMessage || error.message || 'Wallet connection failed.', true);
+    setMessage(explain(error), true);
   } finally {
     ui.connectButton.disabled = false;
   }
@@ -649,6 +652,15 @@ ui.unwrapMax.addEventListener('click', () => {
 ui.wrapButton.addEventListener('click', () => { void executePrep('wrap'); });
 ui.unwrapButton.addEventListener('click', () => { void executePrep('unwrap'); });
 document.querySelectorAll('.tab').forEach((tab) => tab.addEventListener('click', () => selectAction(tab.dataset.action)));
+document.querySelectorAll('[data-view-target]').forEach((button) => button.addEventListener('click', () => {
+  const view = button.dataset.viewTarget;
+  ui.workspaceRoot.dataset.view = view;
+  document.querySelectorAll('[data-view-target]').forEach((item) => {
+    const active = item.dataset.viewTarget === view;
+    item.classList.toggle('active', active);
+    if (active) item.setAttribute('aria-current', 'page'); else item.removeAttribute('aria-current');
+  });
+}));
 window.ethereum?.on?.('accountsChanged', () => window.location.reload());
 window.ethereum?.on?.('chainChanged', () => window.location.reload());
 
@@ -731,6 +743,12 @@ async function init() {
       document.querySelector('label[for="unwrapAmount"]').textContent = `${collateralSymbol} shares to unwrap`;
     }
     quoteParams = { baseLtv, liquidationLtv, closedFactor, minFreshness, minLiquidity };
+    if (signer) {
+      writePool = pool.connect(signer);
+      writeStable = stable.connect(signer);
+      writeCollateral = collateral.connect(signer);
+      if (live) writeUnderlying = underlying.connect(signer);
+    }
     ui.marketName.textContent = `${collateralSymbol} / ${stableSymbol}`;
     ui.quoteLabel.textContent = `${collateralSymbol} amount`;
     ui.quoteDescription.textContent = `Enter a ${collateralSymbol} amount to compare its borrowing power when the reference market is open, closed, or unavailable. Values use the latest onchain oracle update and pool settings.`;
@@ -743,6 +761,7 @@ async function init() {
     await refresh();
     ui.connectButton.disabled = false;
     ui.connectButton.textContent = account ? short(account) : 'Connect wallet';
+    setMessage(account ? 'Wallet connected. Position loaded.' : 'Market loaded. Connect your wallet to start.');
     window.setInterval(refresh, 20_000);
   } catch (error) {
     setMessage(`Could not initialize market: ${explain(error)}`, true);
@@ -750,6 +769,7 @@ async function init() {
     ui.marketPill.className = 'status-pill blocked';
     ui.quoteNote.textContent = 'Could not load current market data. Refresh the page to retry.';
     ui.refreshButton.disabled = false;
+    ui.connectButton.disabled = false;
   }
 }
 

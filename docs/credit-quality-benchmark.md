@@ -1,4 +1,4 @@
-# Vadium: Lombard benchmark
+# Vadium: credit quality benchmark
 
 ## Product definition
 
@@ -47,4 +47,4 @@ The product promise is **access USDG while retaining the tokenized position, sub
 4. Wire real NVDAx and TSLAx V2 wrappers, independent signed feeds, controlled oracle publication, and market-specific limits on testnet or a safe local fork.
 5. Complete external contract review, rights and jurisdiction review, capped mainnet pilot, reconciliation, and monitored release.
 
-The [OKX Builder Kit](https://www.okx.com/learn/okx-dev-day-builder-kit) submission should describe the existing testnet flow and USDG mainnet proof accurately. It should not describe the current demo-collateral pool as a live tokenized-stock Lombard facility.
+The [OKX Builder Kit](https://www.okx.com/learn/okx-dev-day-builder-kit) submission should describe the existing testnet flow and USDG mainnet proof accurately. It should not describe the current demo-collateral pool as a live tokenized-stock Credit facility.

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#0b0c0f" />
     <meta name="description" content="Session-aware lending for tokenized equities on X Layer." />
-    <title>Vadium — Keep the equity. Access the capital.</title>
+    <title>Vadium — Credit against your position</title>
     <link rel="stylesheet" href="/src/style.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -16,13 +16,17 @@
       <header class="topbar">
         <a class="wordmark" href="#">VADIUM<span>.</span></a>
         <div class="network"><i></i><span id="networkLabel">X Layer</span></div>
-        <button id="connectButton" class="wallet-button" disabled>Loading market…</button>
+        <button id="connectButton" class="wallet-button" type="button">Connect wallet</button>
       </header>
 
-      <main>
+      <main id="workspaceRoot" data-view="position">
+        <nav class="view-nav" aria-label="Vadium sections">
+          <button class="view-link active" type="button" data-view-target="position" aria-current="page">Your position</button>
+          <button class="view-link" type="button" data-view-target="market">Market details</button>
+        </nav>
         <section class="hero">
-          <p class="eyebrow">SESSION-AWARE CREDIT / X LAYER</p>
-          <h1>Keep your position.<br /><em>Access the capital.</em></h1>
+          <p class="eyebrow">VADIUM / X LAYER CREDIT</p>
+          <h1>Liquidity for<br /><em>the long position.</em></h1>
           <p id="heroCopy" class="hero-copy">Borrow against tokenized stocks. See your collateral coverage, draw when eligible, and repay without selling your position.</p>
         </section>
 
@@ -30,6 +34,7 @@
           <strong id="environmentTitle">Interactive testnet prototype</strong>
           <span id="environmentCopy">AAPLx and dUSD here are permissionless demo tokens with no real-world value. The separate USDG proof below uses real USDG on X Layer mainnet.</span>
         </section>
+        <p id="connectionStatus" class="connection-status" role="status" aria-live="polite">Checking market data. You can connect your wallet now.</p>
 
         <section class="start-panel" aria-label="Get started">
           <div><span class="section-label">START HERE</span><h2 id="startTitle">Try the lending flow</h2><p id="startCopy">Connect a wallet on X Layer testnet. Mint demo AAPLx to borrow, or mint demo dUSD to supply liquidity. Need gas? <a href="https://web3.okx.com/xlayer/faucet" target="_blank" rel="noreferrer">Get testnet OKB ↗</a></p></div>

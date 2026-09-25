@@ -19,11 +19,11 @@ interface IERC4626Collateral {
     function convertToShares(uint256 assets) external view returns (uint256);
 }
 
-/// @title VadiumLombardPool
+/// @title VadiumCreditPool
 /// @notice An isolated, interest-bearing USDG credit line for one wrapped tokenized equity.
 /// @dev Session and confidence data only constrain risk-increasing actions. The
 ///      liquidation threshold is independent, so a market close cannot itself liquidate users.
-contract VadiumLombardPool {
+contract VadiumCreditPool {
     uint256 private constant BPS = 10_000;
     uint256 private constant RAY = 1e27;
     uint256 private constant YEAR = 365 days;

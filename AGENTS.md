@@ -1,6 +1,6 @@
 # Vadium agent guide
 
-Read `HANDOFF.md`, `docs/lombard-benchmark.md`, and `docs/mainnet-release.md` before changing the lending contracts or release configuration.
+Read `HANDOFF.md`, `docs/credit-quality-benchmark.md`, and `docs/mainnet-release.md` before changing the lending contracts or release configuration.
 
 ## Product target
 
@@ -23,3 +23,4 @@ Read `HANDOFF.md`, `docs/lombard-benchmark.md`, and `docs/mainnet-release.md` be
 - Update `HANDOFF.md` after material decisions or code changes, including tests run and remaining blockers.
 - Keep the README and UI claims aligned with deployed reality. State clearly when a feature is local-only, testnet-only, or live on mainnet.
 - Preserve exact contract addresses, transaction links, and source evidence for Dev Day review. The official submission deadline is 25 September 2026 at 23:59 UTC.
+- Treat the credit quality benchmark as an internal standard. Do not use its former name in public code, UI, docs, or submissions. Prioritize a responsive wallet-first product workspace over a promotional single-page layout. Verify the exact page the user is viewing, including asset loading and interaction feedback.

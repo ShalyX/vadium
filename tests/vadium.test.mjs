@@ -50,9 +50,9 @@ test('coverage shows the correct cushion and price for a six-decimal USDG loan',
   assert.equal(breach.liquidatable, true);
 });
 
-async function lombardFixture() {
+async function creditFixture() {
   const f = await fixture();
-  const facility = await deploy('VadiumLombardPool', 'VadiumLombardPool.sol', f.owner, [
+  const facility = await deploy('VadiumCreditPool', 'VadiumCreditPool.sol', f.owner, [
     await f.stable.getAddress(), await f.stock.getAddress(), await f.oracle.getAddress(),
     ethers.ZeroAddress, 6_500, 8_000, 7_500, 5_000, 3_000, 500, 1_000, E(1_000_000),
   ]);
@@ -64,8 +64,8 @@ async function lombardFixture() {
   return { ...f, facility };
 }
 
-test('Lombard facility accrues borrower interest into lender share value', async () => {
-  const f = await lombardFixture();
+test('Credit facility accrues borrower interest into lender share value', async () => {
+  const f = await creditFixture();
   const borrower = await f.borrower.getAddress();
   await (await f.facility.connect(f.borrower).borrow(E(1_000), { gasLimit: 1_000_000 })).wait();
   await f.provider.send('evm_increaseTime', [365 * 24 * 3600]);
@@ -83,13 +83,13 @@ test('Lombard facility accrues borrower interest into lender share value', async
   assert.ok((await f.stable.balanceOf(await f.lender.getAddress())) - cashBefore > E(20_099));
 });
 
-test('Lombard facility records lender loss when exhausted collateral cannot cover debt', async () => {
-  const f = await lombardFixture();
+test('Credit facility records lender loss when exhausted collateral cannot cover debt', async () => {
+  const f = await creditFixture();
   const borrower = await f.borrower.getAddress();
   await (await f.facility.connect(f.borrower).borrow(E(1_300), { gasLimit: 1_000_000 })).wait();
   await (await f.oracle.connect(f.publisher).publish(await f.stock.getAddress(), {
     price: E(50), freshnessBps: 10_000, liquidityBps: 10_000, asOf: f.now + 1, state: 0,
-    inputsHash: ethers.keccak256(ethers.toUtf8Bytes('lombard-price-drop')),
+    inputsHash: ethers.keccak256(ethers.toUtf8Bytes('credit-price-drop')),
   })).wait();
   assert.equal(await f.facility.isLiquidatable(borrower), true);
   await (await f.stable.connect(f.liquidator).approve(await f.facility.getAddress(), E(1_300))).wait();
@@ -99,8 +99,8 @@ test('Lombard facility records lender loss when exhausted collateral cannot cove
   assert.ok((await f.facility.totalAssets()) < E(20_000));
 });
 
-test('Lombard facility supports partial repayment and a second draw', async () => {
-  const f = await lombardFixture();
+test('Credit facility supports partial repayment and a second draw', async () => {
+  const f = await creditFixture();
   const borrower = await f.borrower.getAddress();
   await (await f.facility.connect(f.borrower).borrow(E(1_000), { gasLimit: 1_000_000 })).wait();
   await (await f.stable.connect(f.borrower).approve(await f.facility.getAddress(), E(1_000))).wait();

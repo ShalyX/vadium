@@ -1,6 +1,7 @@
 node_modules/
 dist/
 public/
+vendor/
 .env
 .env.local
 deployments/*.local.json

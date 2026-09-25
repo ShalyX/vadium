@@ -13,6 +13,9 @@ if (path.resolve(output) !== path.resolve(root, 'public') || path.dirname(output
 fs.rmSync(output, { recursive: true, force: true });
 fs.mkdirSync(path.join(output, 'src'), { recursive: true });
 fs.mkdirSync(path.join(output, 'vendor'), { recursive: true });
+// The repository-root preview used during development serves /vendor directly.
+// Keep it in sync with the production bundle so both entry points execute.
+fs.mkdirSync(path.join(root, 'vendor'), { recursive: true });
 for (const file of ['index.html', 'deployment-config.js']) {
   fs.copyFileSync(path.join(root, file), path.join(output, file));
 }
@@ -20,4 +23,8 @@ for (const file of ['app.js', 'coverage.js', 'style.css']) {
   fs.copyFileSync(path.join(root, 'src', file), path.join(output, 'src', file));
 }
 fs.copyFileSync(path.join(root, 'node_modules/ethers/dist/ethers.min.js'), path.join(output, 'vendor/ethers.min.js'));
+fs.copyFileSync(path.join(root, 'node_modules/ethers/dist/ethers.min.js'), path.join(root, 'vendor/ethers.min.js'));
+if (fs.statSync(path.join(root, 'vendor/ethers.min.js')).size !== fs.statSync(path.join(output, 'vendor/ethers.min.js')).size) {
+  throw new Error('Preview and production wallet bundles differ.');
+}
 console.log('Built public/ with browser-only Vadium assets.');
