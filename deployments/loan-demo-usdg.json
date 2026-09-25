@@ -1,0 +1,80 @@
+{
+  "network": "X Layer Mainnet",
+  "wallet": "0x709F18F797347FbB8D53Fb60567892751dd14B11",
+  "stable": {
+    "symbol": "USDG",
+    "address": "0x4ae46a509F6b1D9056937BA4500cb143933D2dc8"
+  },
+  "pool": "0x5d2194c68E3b0902b0B2f95eDd53Bc2De31d18cd",
+  "supplied": "0.01",
+  "borrowed": "0.005",
+  "openCapacity": "2.179967",
+  "closedCapacity": "1.634975",
+  "pausedMultiplierBps": 0,
+  "finalDebt": "0.0",
+  "finalCollateral": "0.0",
+  "startingUsdg": "0.029717",
+  "endingUsdg": "0.029717",
+  "transactions": [
+    {
+      "label": "approve 0.01 USDG liquidity",
+      "hash": "0xd847da8e40916a031a2413ac83c91e69a497b56e4c1f3be2217d8696c9f38bea",
+      "block": 71578018
+    },
+    {
+      "label": "supply 0.01 USDG",
+      "hash": "0xc7c55539629fab54c60cf866176fd6eae06bdc64cfecf68f6aca054e24c231de",
+      "block": 71578022
+    },
+    {
+      "label": "approve AAPLx collateral",
+      "hash": "0xa24872bf983410b62356a3c0c1fab504446e2c7b49c6348c5cd3bb2c97cac8ca",
+      "block": 71578026
+    },
+    {
+      "label": "deposit 0.01 AAPLx",
+      "hash": "0x037a914869ddcd8106596acaebc873577d6e01555c553fd6495996db2b577ffe",
+      "block": 71578030
+    },
+    {
+      "label": "borrow 0.005 USDG",
+      "hash": "0xa882397229c4ab8557a77f77bba2d790dec51184a3a8254469bc706f45d6d585",
+      "block": 71578035
+    },
+    {
+      "label": "publish closed market",
+      "hash": "0x2b86c224a351f61fa978d7698b47329db671ac86778f2b295d9a6f6bd718323e",
+      "block": 71578040
+    },
+    {
+      "label": "publish unavailable market",
+      "hash": "0x108a9fe8932224d874ba22a24d2410d8e5fc335ff7dc0aafd4b2dc90b53b77e5",
+      "block": 71578045
+    },
+    {
+      "label": "approve 0.005 USDG repayment",
+      "hash": "0xc242fa409e074f52007ed405d5a4893d07ef48616075e4b2c61c1443226a9913",
+      "block": 71578050
+    },
+    {
+      "label": "repay 0.005 USDG while paused",
+      "hash": "0x218343687fdcb833a85d395b39a5b351da8de66b31d4a58cfd52d3c71272194b",
+      "block": 71578055
+    },
+    {
+      "label": "withdraw 0.01 AAPLx",
+      "hash": "0xf27642be5be900ddd0f94e2e5e3bef050d9396333fc86ab1468e3fe02f9b5e83",
+      "block": 71578064
+    },
+    {
+      "label": "withdraw supplied USDG",
+      "hash": "0x03019fd4990d4c2b2111f3d5e3f0d7590a166fae985b758a2433b06b334f6292",
+      "block": 71578070
+    },
+    {
+      "label": "restore open market",
+      "hash": "0x8e0df05a2c7fffc1f235015690559034fa0c9e0902c01dab3ab9daa6df7c0284",
+      "block": 71578077
+    }
+  ]
+}

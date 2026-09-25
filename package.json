@@ -6,6 +6,9 @@
     "test": "node tests/vadium.test.mjs",
     "compile": "node scripts/compile.mjs",
     "deploy:demo": "node scripts/deploy-demo.mjs",
+    "deploy:usdg": "node scripts/deploy-usdg-demo.mjs",
+    "demo:loan": "node scripts/run-loan-demo.mjs",
+    "demo:usdg": "node scripts/run-usdg-loan-demo.mjs",
     "publish:risk": "node scripts/publish-risk.mjs",
     "build": "node scripts/build-web.mjs"
   }

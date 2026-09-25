@@ -1,0 +1,15 @@
+{
+  "network": "X Layer Mainnet",
+  "chainId": 196,
+  "rpcUrl": "https://rpc.xlayer.tech",
+  "explorer": "https://www.okx.com/web3/explorer/xlayer",
+  "deployer": "0x709F18F797347FbB8D53Fb60567892751dd14B11",
+  "stable": "0x4ae46a509F6b1D9056937BA4500cb143933D2dc8",
+  "stableSymbol": "USDG",
+  "collateral": "0xeae5140AB19f9f08D4fE18015B5B40896a5821EC",
+  "collateralSymbol": "AAPLx Demo",
+  "oracle": "0x1d1dEda15055948e274c716B062928B3239D8DE3",
+  "pool": "0x5d2194c68E3b0902b0B2f95eDd53Bc2De31d18cd",
+  "initialRiskTransaction": "0x47b979a76d2451f8bedc38e30c3df6f7ea46333d7056a06786b9dbee1f35919f",
+  "initialRiskBlock": 71577980
+}

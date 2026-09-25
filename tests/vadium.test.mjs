@@ -107,7 +107,10 @@ test('oracle exposes auditable risk and becomes unavailable when stale', async (
 test('publisher can explicitly halt an asset without publishing a fake price', async () => {
   const f = await fixture();
   await f.publish();
-  const halt = { price: 0, freshnessBps: 0, liquidityBps: 0, asOf: f.now + 1, state: 2, inputsHash: ethers.keccak256(ethers.toUtf8Bytes('halt')) };
+  await f.provider.send('evm_increaseTime', [1]);
+  await f.provider.send('evm_mine', []);
+  const haltAsOf = (await f.provider.getBlock('latest')).timestamp;
+  const halt = { price: 0, freshnessBps: 0, liquidityBps: 0, asOf: haltAsOf, state: 2, inputsHash: ethers.keccak256(ethers.toUtf8Bytes('halt')) };
   await (await f.oracle.connect(f.publisher).publish(await f.stock.getAddress(), halt)).wait();
   assert.equal((await f.oracle.currentRisk(await f.stock.getAddress()))[0], false);
 });

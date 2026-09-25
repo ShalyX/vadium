@@ -11,6 +11,19 @@ Vadium is a session-aware lending market for tokenized equities on X Layer. It c
 
 The pool was initialized with 50,000 dUSD of test liquidity. The latest oracle update reports the reference market as `Open`, with full freshness and liquidity at 200% of the ticker's historical hour-of-week baseline. Vadium caps the effective credit multiplier at 100%.
 
+## Real USDG mainnet proof
+
+An experimental pool is deployed on X Layer mainnet with the canonical USDG contract as its stable asset. The collateral remains a demo AAPLx token, so this deployment is transaction proof—not a production lending market.
+
+- Pool: [`0x5d2194c68E3b0902b0B2f95eDd53Bc2De31d18cd`](https://www.okx.com/web3/explorer/xlayer/address/0x5d2194c68E3b0902b0B2f95eDd53Bc2De31d18cd)
+- Market risk oracle: [`0x1d1dEda15055948e274c716B062928B3239D8DE3`](https://www.okx.com/web3/explorer/xlayer/address/0x1d1dEda15055948e274c716B062928B3239D8DE3)
+- Demo AAPLx: [`0xeae5140AB19f9f08D4fE18015B5B40896a5821EC`](https://www.okx.com/web3/explorer/xlayer/address/0xeae5140AB19f9f08D4fE18015B5B40896a5821EC)
+- USDG: [`0x4ae46a509F6b1D9056937BA4500cb143933D2dc8`](https://www.okx.com/web3/explorer/xlayer/address/0x4ae46a509F6b1D9056937BA4500cb143933D2dc8)
+- Real borrow proof: [`0xa882397229c4ab8557a77f77bba2d790dec51184a3a8254469bc706f45d6d585`](https://www.okx.com/web3/explorer/xlayer/tx/0xa882397229c4ab8557a77f77bba2d790dec51184a3a8254469bc706f45d6d585)
+- Repayment while risk was paused: [`0x218343687fdcb833a85d395b39a5b351da8de66b31d4a58cfd52d3c71272194b`](https://www.okx.com/web3/explorer/xlayer/tx/0x218343687fdcb833a85d395b39a5b351da8de66b31d4a58cfd52d3c71272194b)
+
+The proof supplied `0.01 USDG`, borrowed `0.005 USDG`, reduced capacity from `2.179967` to `1.634975 USDG` when the market closed, and reduced new credit to zero when data became unavailable. Repayment remained enabled. The collateral and liquidity were then withdrawn, leaving zero debt and returning the wallet's USDG balance to its starting value.
+
 ## MVP scope
 
 - One isolated xStock/stablecoin lending pool per deployment
@@ -20,7 +33,7 @@ The pool was initialized with 50,000 dUSD of test liquidity. The latest oracle u
 - Wallet-connected interface with no silent demo fallback
 - X Layer testnet demo deployment script with faucet-style mock assets
 
-The testnet token contracts are deliberately permissionless demo faucets. They are not production assets. Mainnet deployment must use real token contracts, reviewed oracle operations, and audited pool code.
+The demo token contracts are deliberately permissionless faucets. They are not production assets. A production deployment requires real collateral contracts, reviewed oracle operations, and audited pool code.
 
 ## Verify locally
 
@@ -40,6 +53,8 @@ Serve this directory with any static server to inspect the interface. Until `dep
 2. Add a dedicated testnet deployer private key with testnet OKB. Never use a wallet that holds real funds.
 3. Run `npm run deploy:demo`.
 4. The script deploys demo dUSD, demo AAPLx, the oracle, and the pool; seeds lender liquidity; publishes the initial risk state; and updates `deployment-config.js`.
+
+The mainnet proof scripts are deliberately gated by `RUN_VADIUM_MAINNET=1`. `npm run deploy:usdg` deploys an empty real-USDG pool, while `npm run demo:usdg` runs the reversible micro-loan and writes its receipt evidence to `deployments/loan-demo-usdg.json`.
 
 After refreshing the OKX candle dataset, run `npm run publish:risk`. The publisher uses the last confirmed non-zero-volume observation, the existing decaying freshness formula, and volume normalized against the ticker's own historical hour-of-week. If either component is unavailable, it publishes an explicit halt instead of manufacturing a confidence score. The current market calendar check covers weekday/session hours; exchange holidays remain a documented MVP limitation.
 

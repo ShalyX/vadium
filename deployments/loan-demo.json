@@ -1,0 +1,50 @@
+{
+  "wallet": "0x709F18F797347FbB8D53Fb60567892751dd14B11",
+  "openCapacity": "0.0",
+  "closedCapacity": "2184.747922",
+  "pausedMultiplierBps": 7500,
+  "finalDebt": "0.0",
+  "finalCollateral": "0.0",
+  "transactions": [
+    {
+      "label": "approve AAPLx",
+      "hash": "0xa09ef2d7b3685dc3b2d7aa2e2f6a4cd8af36d4ae9e50693b6f00b6cd30a8fc40",
+      "block": 41885687
+    },
+    {
+      "label": "deposit 10 AAPLx",
+      "hash": "0x4b94daf3e964a452739f30d4cf0741515e155f10616c5fac6d1a6c6d57cb5969",
+      "block": 41885691
+    },
+    {
+      "label": "borrow 1,000 dUSD",
+      "hash": "0x35ef226931ad20652763052bf5f3b79ede765ed425e6ba9e860fa47cba93194f",
+      "block": 41885697
+    },
+    {
+      "label": "publish closed market",
+      "hash": "0x770335ff4e5fc3d43d55b33b140abf78b984420b2cb68b781384842b6db9d58e",
+      "block": 41885703
+    },
+    {
+      "label": "publish unavailable market",
+      "hash": "0x6d48f30a70cb31119eca4287a0ba733b69824a1aadd38377c0c6e33414f86342",
+      "block": 41885710
+    },
+    {
+      "label": "approve dUSD repayment",
+      "hash": "0xe1d590635d9b44c79a8e5c311a0c00f6da88ca5459fba0a2cbea1a527738196f",
+      "block": 41885716
+    },
+    {
+      "label": "repay 1,000 dUSD while paused",
+      "hash": "0xb6ce06a75240db63c05728b04982b71f41ba73ecb956107b39eff24be93f35f6",
+      "block": 41885722
+    },
+    {
+      "label": "withdraw 10 AAPLx while debt-free",
+      "hash": "0x812e278dac8527bc7b821d0998ce4177f12328ca56546e3c75262de02b7483e4",
+      "block": 41885728
+    }
+  ]
+}
