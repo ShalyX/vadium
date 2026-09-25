@@ -1,4 +1,5 @@
 import { BrowserProvider, Contract, JsonRpcProvider, formatUnits, parseUnits } from '../vendor/ethers.min.js';
+import { calculateCoverage } from './coverage.js';
 
 const config = window.VADIUM_CONFIG;
 
@@ -31,6 +32,7 @@ const ui = Object.fromEntries([
   'environmentTitle','environmentCopy','startTitle','startCopy','startActions','quoteDescription','quoteLabel',
   'marketDescription','walletCollateralLabel','walletStableLabel','baseLtvValue','liquidationLtvValue','mainnetProof',
   'quoteAmount','quoteCurrent','quoteOpen','quoteClosed','quoteUnavailable','quoteNote',
+  'heroCopy','coverageState','currentLtvValue','liquidationPriceValue','liquidationBufferValue','coverageRail','coverageNote',
   'collateralPrep','prepHeading','wrapperLink','rawBalanceLabel','rawBalance','wrappedBalanceLabel','wrappedBalance',
   'wrapAmount','wrapMax','wrapPreview','wrapButton','unwrapAmount','unwrapMax','unwrapPreview','unwrapButton',
   'prepMessage','prepTransactionLink',
@@ -360,6 +362,7 @@ async function refresh(force = false) {
       const underlyingAmount = collateralAmount * underlyingPerWhole / (10n ** BigInt(collateralDecimals));
       const valueUsd = available ? underlyingAmount * risk.price / (10n ** BigInt(underlyingDecimals)) : 0n;
       ui.positionValue.textContent = available ? number(valueUsd, 18) : '—';
+      renderCoverage({ available, debt, capacity, underlyingAmount, price: risk.price });
     }
     marketReady = true;
     setPending(pending);
@@ -376,6 +379,7 @@ async function refresh(force = false) {
       ui.walletCollateral, ui.walletStable, ui.sharesValue, ui.freshnessValue,
       ui.liquidityValue, ui.multiplierValue]) field.textContent = '—';
     for (const rail of [ui.freshnessRail, ui.liquidityRail, ui.multiplierRail]) rail.style.width = '0%';
+    renderCoverage();
     ui.updatedAt.textContent = 'READ FAILED';
     snapshot = {};
     if (liveMarket()) {
@@ -394,6 +398,66 @@ async function refresh(force = false) {
   } finally {
     refreshing = false;
     ui.refreshButton.disabled = pending || !pool;
+  }
+}
+
+function renderCoverage(position) {
+  const clear = () => {
+    ui.currentLtvValue.textContent = '—';
+    ui.liquidationPriceValue.textContent = '—';
+    ui.liquidationBufferValue.textContent = '—';
+    ui.coverageRail.style.width = '0%';
+    ui.coverageRail.classList.remove('at-risk');
+  };
+  if (!position) {
+    clear();
+    ui.coverageState.textContent = account ? 'READ FAILURE' : 'CONNECT WALLET';
+    ui.coverageState.classList.add('at-risk');
+    ui.coverageNote.textContent = account
+      ? 'Could not load your position. Refresh before making a credit decision.'
+      : 'Connect your wallet to see the borrowing limit and liquidation buffer for your position.';
+    return;
+  }
+  const { available, debt, capacity, underlyingAmount, price } = position;
+  if (debt === 0n) {
+    clear();
+    ui.coverageState.textContent = underlyingAmount > 0n ? 'NO DEBT' : 'NO POSITION';
+    ui.coverageState.classList.remove('at-risk');
+    ui.coverageNote.textContent = underlyingAmount > 0n
+      ? 'Your collateral is deposited and the credit line is unused.'
+      : 'Deposit eligible collateral to open borrowing capacity.';
+    return;
+  }
+  if (!available || underlyingAmount === 0n || price === 0n) {
+    clear();
+    ui.coverageState.textContent = 'PRICE UNAVAILABLE';
+    ui.coverageState.classList.add('at-risk');
+    ui.coverageNote.textContent = 'Current coverage cannot be computed. Repayment and collateral top-ups remain available.';
+    return;
+  }
+  const { threshold, ltvBps, priceAtThreshold, buffer, usageBps, liquidatable } = calculateCoverage({
+    debt, underlyingAmount, price, underlyingDecimals, stableDecimals,
+    liquidationLtvBps: quoteParams.liquidationLtv,
+  });
+  ui.currentLtvValue.textContent = ltvBps === null ? '—' : pct(ltvBps);
+  ui.liquidationPriceValue.textContent = priceAtThreshold === null ? '—' : `$${number(priceAtThreshold, 18, 2)}`;
+  ui.liquidationBufferValue.textContent = `${number(buffer, stableDecimals, 2)} ${stableSymbol}`;
+  ui.coverageRail.style.width = `${Math.min(Number(usageBps ?? 10_000n) / 100, 100)}%`;
+  const atRisk = liquidatable || usageBps === null || usageBps >= 8_500n;
+  ui.coverageRail.classList.toggle('at-risk', atRisk);
+  ui.coverageState.classList.toggle('at-risk', atRisk);
+  if (liquidatable) {
+    ui.coverageState.textContent = 'LIQUIDATABLE';
+    ui.coverageNote.textContent = 'Debt exceeds the hard threshold at the current oracle price. Add collateral or repay immediately.';
+  } else if (usageBps === null || usageBps >= 8_500n) {
+    ui.coverageState.textContent = 'NEAR THRESHOLD';
+    ui.coverageNote.textContent = 'The buffer is narrow. Add collateral or repay to reduce liquidation risk.';
+  } else if (debt > capacity) {
+    ui.coverageState.textContent = 'NO NEW DRAW';
+    ui.coverageNote.textContent = 'Current conditions reduce new credit. A smaller draw limit alone does not trigger liquidation.';
+  } else {
+    ui.coverageState.textContent = 'HEALTHY';
+    ui.coverageNote.textContent = 'The displayed buffer uses the current oracle price. It can change before your next transaction.';
   }
 }
 
@@ -592,6 +656,7 @@ async function init() {
   if (!configured()) return setMessage('Contracts are not configured.', true);
   const live = liveMarket();
   if (live) {
+    ui.heroCopy.textContent = 'Draw USDG against wrapped tokenized stocks. Track collateral coverage and repay without selling your position.';
     ui.environmentTitle.textContent = 'X Layer mainnet market';
     ui.environmentCopy.textContent = 'Transactions use real assets. Review the market risk state and contract addresses before depositing or supplying.';
     ui.startTitle.textContent = 'Use your X Layer assets';
@@ -665,7 +730,7 @@ async function init() {
       document.querySelector('label[for="wrapAmount"]').textContent = `${underlyingSymbol} to wrap`;
       document.querySelector('label[for="unwrapAmount"]').textContent = `${collateralSymbol} shares to unwrap`;
     }
-    quoteParams = { baseLtv, closedFactor, minFreshness, minLiquidity };
+    quoteParams = { baseLtv, liquidationLtv, closedFactor, minFreshness, minLiquidity };
     ui.marketName.textContent = `${collateralSymbol} / ${stableSymbol}`;
     ui.quoteLabel.textContent = `${collateralSymbol} amount`;
     ui.quoteDescription.textContent = `Enter a ${collateralSymbol} amount to compare its borrowing power when the reference market is open, closed, or unavailable. Values use the latest onchain oracle update and pool settings.`;

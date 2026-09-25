@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { ethers } from 'ethers';
 import ganache from 'ganache';
 import solc from 'solc';
+import { calculateCoverage } from '../src/coverage.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 function compile() {
@@ -30,6 +31,86 @@ function compile() {
 const contracts = compile();
 const artifact = (file, name) => contracts[file][name];
 const E = (value) => ethers.parseUnits(String(value), 18);
+
+test('coverage shows the correct cushion and price for a six-decimal USDG loan', () => {
+  const position = calculateCoverage({
+    debt: 1_000_000_000n, underlyingAmount: E(10), price: E(200),
+    underlyingDecimals: 18, stableDecimals: 6, liquidationLtvBps: 8_000n,
+  });
+  assert.equal(position.stableValue, 2_000_000_000n);
+  assert.equal(position.threshold, 1_600_000_000n);
+  assert.equal(position.buffer, 600_000_000n);
+  assert.equal(position.ltvBps, 5_000n);
+  assert.equal(position.priceAtThreshold, E(125));
+  assert.equal(position.liquidatable, false);
+  const breach = calculateCoverage({
+    debt: 1_600_000_001n, underlyingAmount: E(10), price: E(200),
+    underlyingDecimals: 18, stableDecimals: 6, liquidationLtvBps: 8_000n,
+  });
+  assert.equal(breach.liquidatable, true);
+});
+
+async function lombardFixture() {
+  const f = await fixture();
+  const facility = await deploy('VadiumLombardPool', 'VadiumLombardPool.sol', f.owner, [
+    await f.stable.getAddress(), await f.stock.getAddress(), await f.oracle.getAddress(),
+    ethers.ZeroAddress, 6_500, 8_000, 7_500, 5_000, 3_000, 500, 1_000, E(1_000_000),
+  ]);
+  await (await f.stable.connect(f.lender).approve(await facility.getAddress(), E(100_000))).wait();
+  await (await f.stock.connect(f.borrower).approve(await facility.getAddress(), E(100))).wait();
+  await f.publish();
+  await (await facility.connect(f.lender).supply(E(20_000), { gasLimit: 1_000_000 })).wait();
+  await (await facility.connect(f.borrower).depositCollateral(E(10))).wait();
+  return { ...f, facility };
+}
+
+test('Lombard facility accrues borrower interest into lender share value', async () => {
+  const f = await lombardFixture();
+  const borrower = await f.borrower.getAddress();
+  await (await f.facility.connect(f.borrower).borrow(E(1_000), { gasLimit: 1_000_000 })).wait();
+  await f.provider.send('evm_increaseTime', [365 * 24 * 3600]);
+  await f.provider.send('evm_mine', []);
+  const debt = await f.facility.debtOf(borrower);
+  assert.ok(debt > E(1_099) && debt < E(1_101));
+  assert.ok((await f.facility.totalAssets()) > E(20_099));
+  await (await f.stable.mint(borrower, E(200))).wait();
+  await (await f.stable.connect(f.borrower).approve(await f.facility.getAddress(), E(2_000))).wait();
+  await (await f.facility.connect(f.borrower).repay(E(2_000), { gasLimit: 1_000_000 })).wait();
+  assert.equal(await f.facility.debtOf(borrower), 0n);
+  const shares = await f.facility.liquidityShares(await f.lender.getAddress());
+  const cashBefore = await f.stable.balanceOf(await f.lender.getAddress());
+  await (await f.facility.connect(f.lender).withdrawLiquidity(shares, { gasLimit: 1_000_000 })).wait();
+  assert.ok((await f.stable.balanceOf(await f.lender.getAddress())) - cashBefore > E(20_099));
+});
+
+test('Lombard facility records lender loss when exhausted collateral cannot cover debt', async () => {
+  const f = await lombardFixture();
+  const borrower = await f.borrower.getAddress();
+  await (await f.facility.connect(f.borrower).borrow(E(1_300), { gasLimit: 1_000_000 })).wait();
+  await (await f.oracle.connect(f.publisher).publish(await f.stock.getAddress(), {
+    price: E(50), freshnessBps: 10_000, liquidityBps: 10_000, asOf: f.now + 1, state: 0,
+    inputsHash: ethers.keccak256(ethers.toUtf8Bytes('lombard-price-drop')),
+  })).wait();
+  assert.equal(await f.facility.isLiquidatable(borrower), true);
+  await (await f.stable.connect(f.liquidator).approve(await f.facility.getAddress(), E(1_300))).wait();
+  await (await f.facility.connect(f.liquidator).liquidate(borrower, E(1_300), { gasLimit: 1_000_000 })).wait();
+  assert.equal(await f.facility.collateralOf(borrower), 0n);
+  assert.equal(await f.facility.debtOf(borrower), 0n);
+  assert.ok((await f.facility.totalAssets()) < E(20_000));
+});
+
+test('Lombard facility supports partial repayment and a second draw', async () => {
+  const f = await lombardFixture();
+  const borrower = await f.borrower.getAddress();
+  await (await f.facility.connect(f.borrower).borrow(E(1_000), { gasLimit: 1_000_000 })).wait();
+  await (await f.stable.connect(f.borrower).approve(await f.facility.getAddress(), E(1_000))).wait();
+  await (await f.facility.connect(f.borrower).repay(E(400), { gasLimit: 1_000_000 })).wait();
+  const afterRepay = await f.facility.debtOf(borrower);
+  assert.ok(afterRepay >= E(600) && afterRepay < E(601));
+  await (await f.facility.connect(f.borrower).borrow(E(300), { gasLimit: 1_000_000 })).wait();
+  const afterRedraw = await f.facility.debtOf(borrower);
+  assert.ok(afterRedraw >= E(900) && afterRedraw < E(901));
+});
 
 async function deploy(name, file, signer, args = []) {
   const a = artifact(file, name);

@@ -22,8 +22,8 @@
       <main>
         <section class="hero">
           <p class="eyebrow">SESSION-AWARE CREDIT / X LAYER</p>
-          <h1>Keep the equity.<br /><em>Access the capital.</em></h1>
-          <p class="hero-copy">Borrow against tokenized stocks with credit limits that respond to market hours, stale prices, and thin liquidity.</p>
+          <h1>Keep your position.<br /><em>Access the capital.</em></h1>
+          <p id="heroCopy" class="hero-copy">Borrow against tokenized stocks. See your collateral coverage, draw when eligible, and repay without selling your position.</p>
         </section>
 
         <section id="environmentNotice" class="demo-notice" aria-label="Market environment">
@@ -73,6 +73,13 @@
               <div class="metric-row"><span id="walletCollateralLabel">Wallet AAPLx</span><strong id="walletCollateral">—</strong></div>
               <div class="metric-row"><span id="walletStableLabel">Wallet dUSD</span><strong id="walletStable">—</strong></div>
               <div class="metric-row"><span>Liquidity shares</span><strong id="sharesValue">—</strong></div>
+
+              <div class="coverage-panel" aria-label="Collateral coverage">
+                <div class="coverage-head"><span class="section-label">COLLATERAL COVERAGE</span><strong id="coverageState">CONNECT WALLET</strong></div>
+                <div class="coverage-metrics"><div><span>Current LTV</span><strong id="currentLtvValue">—</strong></div><div><span>Liquidation price</span><strong id="liquidationPriceValue">—</strong></div><div><span>Value above threshold</span><strong id="liquidationBufferValue">—</strong></div></div>
+                <div class="coverage-rail"><i id="coverageRail"></i></div>
+                <p id="coverageNote">Connect your wallet to see the borrowing limit and liquidation buffer for your position.</p>
+              </div>
 
               <div class="action-tabs" role="tablist">
                 <button class="tab active" data-action="deposit">Deposit</button>

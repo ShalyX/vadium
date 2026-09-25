@@ -90,6 +90,18 @@ h1 em { color: var(--muted); font-style: normal; }
 .position-value strong { font: 500 48px DM Mono, monospace; letter-spacing: -.07em; }
 .metric-row, .permission-row { display: flex; justify-content: space-between; padding: 12px 0; color: var(--muted); border-bottom: 1px solid #222527; font-size: 13px; }
 .metric-row strong, .permission-row strong { color: var(--ink); font: 500 13px DM Mono, monospace; }
+.coverage-panel { margin-top: 25px; border: 1px solid #394139; background: #151a16; padding: 17px; }
+.coverage-head { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+.coverage-head strong { color: var(--acid); font: 10px DM Mono, monospace; letter-spacing: .08em; }
+.coverage-head strong.at-risk { color: var(--orange); }
+.coverage-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 18px; }
+.coverage-metrics span, .coverage-metrics strong { display: block; }
+.coverage-metrics span { color: var(--muted); font-size: 10px; }
+.coverage-metrics strong { margin-top: 7px; font: 13px DM Mono, monospace; }
+.coverage-rail { height: 5px; background: #2b302b; margin-top: 18px; overflow: hidden; }
+.coverage-rail i { display: block; height: 100%; width: 0; background: var(--acid); transition: width .35s ease; }
+.coverage-rail i.at-risk { background: var(--orange); }
+.coverage-panel p { margin: 12px 0 0; color: #aeb5ae; font-size: 11px; line-height: 1.6; }
 .action-tabs { display: grid; grid-template-columns: repeat(6, 1fr); margin-top: 28px; border-bottom: 1px solid var(--line); }
 .tab { color: var(--muted); background: transparent; border: 0; padding: 12px 3px; font-size: 12px; }
 .tab.active { color: var(--ink); border-bottom: 2px solid var(--acid); }
@@ -153,6 +165,7 @@ footer { width: min(1180px, calc(100% - 48px)); margin: 45px auto 28px; display:
   .position-panel { border-right: 0; border-bottom: 1px solid var(--line); }
   .position-panel, .risk-panel { padding: 22px 18px; }
   .action-tabs { grid-template-columns: repeat(3, 1fr); }
+  .coverage-metrics { grid-template-columns: 1fr 1fr; }
   .proof-strip { grid-template-columns: 1fr 1fr; }
   .proof-strip div:nth-child(2) { border-right: 0; }
   .proof-strip div:nth-child(-n+2) { border-bottom: 1px solid var(--line); }

@@ -1,6 +1,6 @@
 # Vadium
 
-Vadium is a session-aware lending market for tokenized equities on X Layer. It changes the credit available for new risk-taking when the reference market is closed, price data is old, or onchain liquidity is thin. Repayment and collateral top-ups are never disabled, and a session change cannot by itself liquidate an existing position.
+Vadium is building revolving USDG credit lines backed by wrapped tokenized equity positions on X Layer. The first release target is separate NVDAx and TSLAx facilities. The [Lombard benchmark](docs/lombard-benchmark.md) defines the borrower journey, interest and lender economics, coverage controls, and mainnet release gates. The current pool is a principal-only prototype: it changes new credit when the reference market is closed, price data is old, or onchain liquidity is thin, while keeping repayment and collateral top-ups available.
 
 **Release target:** a real wrapped xStock / USDG market on X Layer mainnet. The deployed testnet market is for testing. The current mainnet USDG pool uses permissionless demo collateral and is not the release pool. See the [mainnet release plan](docs/mainnet-release.md) for verified asset options, the required wrapper and oracle design, and remaining launch gates.
 

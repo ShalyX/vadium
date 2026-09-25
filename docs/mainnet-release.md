@@ -1,6 +1,6 @@
 # Vadium mainnet release plan
 
-**Product target:** an X Layer lending market where users deposit a real, non-rebasing wrapped xStock and borrow real USDG. Testnet is for integration and failure testing. The existing X Layer mainnet USDG pool uses mintable demo collateral and is transaction evidence only; it must not receive user funds.
+**Product target:** separate NVDAx and TSLAx revolving USDG credit lines on X Layer, each secured by the issuer's current non-rebasing wrapper. The [Lombard benchmark](lombard-benchmark.md) defines the full facility requirements. Testnet is for integration and failure testing. The existing X Layer mainnet USDG pool uses mintable demo collateral and is transaction evidence only; it must not receive user funds.
 
 ## Verified collateral options
 
@@ -8,10 +8,10 @@ Checked against the [xStocks public assets API](https://docs.xstocks.fi/apis/ope
 
 | Market | Issuer xStock | Current V2 wrapper | Launch fit |
 | --- | --- | --- | --- |
-| AAPLx | `0x9d275685dc284c8eb1c79f6aba7a63dc75ec890a` | `0x943bf64d566c32a2bcd41ac92fb63c111cc9de8f` | First choice: matches the existing flow and has a listed X Layer Chainlink feed. |
+| AAPLx | `0x9d275685dc284c8eb1c79f6aba7a63dc75ec890a` | `0x943bf64d566c32a2bcd41ac92fb63c111cc9de8f` | Existing integration and test reference. |
 | SPYx | `0x90a2a4c76b5d8c0bc892a69ea28aa775a8f2dd48` | `0xe7e553cd128f0011777323a0b44a7b96ea1cb540` | Second market candidate: broader underlying exposure, subject to liquidity and risk review. |
-| NVDAx | `0xc845b2894dbddd03858fd2d643b4ef725fe0849d` | `0xa8ddb5cd96b5222afe198316e9a57caa642850d5` | Later market with separate volatility limits. |
-| TSLAx | `0x8ad3c73f833d3f9a523ab01476625f269aeb7cf0` | `0xc3fdbe3a68ee5de461d30415a8165cf9aefe1171` | Later market with separate volatility limits. |
+| NVDAx | `0xc845b2894dbddd03858fd2d643b4ef725fe0849d` | `0xa8ddb5cd96b5222afe198316e9a57caa642850d5` | First planned facility; requires its own risk limits and liquidity review. |
+| TSLAx | `0x8ad3c73f833d3f9a523ab01476625f269aeb7cf0` | `0xc3fdbe3a68ee5de461d30415a8165cf9aefe1171` | Second planned facility; requires separate risk limits and liquidity review. |
 
 The canonical X Layer USDG address is `0x4ae46a509f6b1d9056937ba4500cb143933d2dc8`, also listed in [OKX's X Layer contract directory](https://web3.okx.com/onchainos/dev-docs/xlayer/developer/build-on-xlayer/contracts). The issuer API reports six decimals for its X Layer USDG route. Do not substitute a similarly named token.
 
