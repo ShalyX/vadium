@@ -20,7 +20,7 @@ Use `docs/lombard-benchmark.md` for the borrower and lender acceptance criteria,
 1. Add adversarial and invariant tests for interest and debt-share rounding, liquidation bounds, repeat liquidations, lender redemption around a loss, and wrapper conversion changes. Review the loss policy and liquidation economics independently.
 2. Inspect the borrower coverage UI in the local browser with a working RPC and verify gas estimates in a real wallet.
 3. Keep the new facility labeled local-only. It still needs review of interest math, bad-debt allocation, liquidation fairness, market-specific limits, and real oracle integration.
-4. `npm run check` passed: 20 tests, 15 contracts compiled, static web build verified. `git diff --check` passed with line-ending warnings only. Add the checkpoint commit hash below after committing.
+4. Checkpoint commit `aed97b5` passed `npm run check`: 20 tests, 15 contracts compiled, static web build verified. `git diff --check` passed with line-ending warnings only.
 
 ## External dependencies and release blockers
 
