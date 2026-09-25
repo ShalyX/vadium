@@ -2,6 +2,15 @@
 
 Vadium is a session-aware lending market for tokenized equities on X Layer. It changes the credit available for new risk-taking when the reference market is closed, price data is old, or onchain liquidity is thin. Repayment and collateral top-ups are never disabled, and a session change cannot by itself liquidate an existing position.
 
+## Live X Layer testnet deployment
+
+- Pool: [`0xE74520d6B698b5Cc61c57152314c46933547751B`](https://www.okx.com/web3/explorer/xlayer-test/address/0xE74520d6B698b5Cc61c57152314c46933547751B)
+- Market risk oracle: [`0xbC3b450c649Fb3020AE1C692b502BF85d6cD390a`](https://www.okx.com/web3/explorer/xlayer-test/address/0xbC3b450c649Fb3020AE1C692b502BF85d6cD390a)
+- Demo AAPLx: [`0x235b537e0bc3549959E0aebf5528d8677E43FB02`](https://www.okx.com/web3/explorer/xlayer-test/address/0x235b537e0bc3549959E0aebf5528d8677E43FB02)
+- Demo dUSD: [`0x588eb96429A3c22f22848185F2b5FfD08AdfD8Ae`](https://www.okx.com/web3/explorer/xlayer-test/address/0x588eb96429A3c22f22848185F2b5FfD08AdfD8Ae)
+
+The pool was initialized with 50,000 dUSD of test liquidity. The latest oracle update intentionally reports `Unavailable`: the saved AAPL observation exceeded the six-hour freshness limit and the live OKX refresh was unreachable. This demonstrates Vadium's fail-closed path without presenting stale data as live.
+
 ## MVP scope
 
 - One isolated xStock/stablecoin lending pool per deployment

@@ -1,0 +1,13 @@
+{
+  "network": "X Layer Testnet",
+  "chainId": 1952,
+  "rpcUrl": "https://testrpc.xlayer.tech/terigon",
+  "explorer": "https://www.okx.com/web3/explorer/xlayer-test",
+  "deployer": "0x709F18F797347FbB8D53Fb60567892751dd14B11",
+  "stable": "0x588eb96429A3c22f22848185F2b5FfD08AdfD8Ae",
+  "collateral": "0x235b537e0bc3549959E0aebf5528d8677E43FB02",
+  "oracle": "0xbC3b450c649Fb3020AE1C692b502BF85d6cD390a",
+  "pool": "0xE74520d6B698b5Cc61c57152314c46933547751B",
+  "initialLiquidity": "50000 dUSD",
+  "latestRiskTransaction": "0x9da9ee2335da38830eb4c741ab01b7d015de20c26ee0ab42bf26284c4376d63c"
+}
