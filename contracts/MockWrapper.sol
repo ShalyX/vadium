@@ -23,4 +23,33 @@ contract MockWrapper is MockERC20 {
     function convertToShares(uint256 assets) external view returns (uint256) {
         return assets * 1e18 / assetsPerShare;
     }
+
+    function previewDeposit(uint256 assets) public view returns (uint256) {
+        return assets * 1e18 / assetsPerShare;
+    }
+
+    function previewRedeem(uint256 shares) public view returns (uint256) {
+        return shares * assetsPerShare / 1e18;
+    }
+
+    function maxDeposit(address) external pure returns (uint256) { return type(uint256).max; }
+
+    function maxRedeem(address owner) external view returns (uint256) { return balanceOf[owner]; }
+
+    function deposit(uint256 assets, address receiver) external returns (uint256 shares) {
+        shares = previewDeposit(assets);
+        require(shares != 0 && MockERC20(asset).transferFrom(msg.sender, address(this), assets));
+        balanceOf[receiver] += shares;
+        totalSupply += shares;
+        emit Transfer(address(0), receiver, shares);
+    }
+
+    function redeem(uint256 shares, address receiver, address owner) external returns (uint256 assets) {
+        require(msg.sender == owner && shares <= balanceOf[owner]);
+        assets = previewRedeem(shares);
+        balanceOf[owner] -= shares;
+        totalSupply -= shares;
+        emit Transfer(owner, address(0), shares);
+        require(MockERC20(asset).transfer(receiver, assets));
+    }
 }

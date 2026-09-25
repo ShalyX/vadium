@@ -19,7 +19,7 @@ const poolAbi = [
   'error DebtCeilingExceeded()', 'error InsufficientShares()', 'error ZeroAmount()', 'error TransferFailed()', 'error UnexpectedTransferAmount()',
 ];
 const oracleAbi = ['function currentRisk(address) view returns (bool,(uint128 price,uint16 freshnessBps,uint16 liquidityBps,uint64 asOf,uint8 state,bytes32 inputsHash))'];
-const erc20Abi = ['function symbol() view returns (string)', 'function decimals() view returns (uint8)', 'function balanceOf(address) view returns (uint256)', 'function allowance(address,address) view returns (uint256)', 'function approve(address,uint256) returns (bool)', 'function mint(address,uint256)', 'function asset() view returns (address)', 'function convertToAssets(uint256) view returns (uint256)'];
+const erc20Abi = ['function symbol() view returns (string)', 'function decimals() view returns (uint8)', 'function balanceOf(address) view returns (uint256)', 'function allowance(address,address) view returns (uint256)', 'function approve(address,uint256) returns (bool)', 'function mint(address,uint256)', 'function asset() view returns (address)', 'function convertToAssets(uint256) view returns (uint256)', 'function previewDeposit(uint256) view returns (uint256)', 'function previewRedeem(uint256) view returns (uint256)', 'function maxDeposit(address) view returns (uint256)', 'function maxRedeem(address) view returns (uint256)', 'function deposit(uint256,address) returns (uint256)', 'function redeem(uint256,address,address) returns (uint256)'];
 
 const $ = (id) => document.getElementById(id);
 const ui = Object.fromEntries([
@@ -31,6 +31,9 @@ const ui = Object.fromEntries([
   'environmentTitle','environmentCopy','startTitle','startCopy','startActions','quoteDescription','quoteLabel',
   'marketDescription','walletCollateralLabel','walletStableLabel','baseLtvValue','liquidationLtvValue','mainnetProof',
   'quoteAmount','quoteCurrent','quoteOpen','quoteClosed','quoteUnavailable','quoteNote',
+  'collateralPrep','prepHeading','wrapperLink','rawBalanceLabel','rawBalance','wrappedBalanceLabel','wrappedBalance',
+  'wrapAmount','wrapMax','wrapPreview','wrapButton','unwrapAmount','unwrapMax','unwrapPreview','unwrapButton',
+  'prepMessage','prepTransactionLink',
 ].map((id) => [id, $(id)]));
 
 let provider;
@@ -40,15 +43,18 @@ let pool;
 let oracle;
 let stable;
 let collateral;
+let underlying;
 let writePool;
 let writeStable;
 let writeCollateral;
+let writeUnderlying;
 let stableDecimals = 18;
 let collateralDecimals = 18;
 let underlyingDecimals = 18;
 let underlyingPerWhole = 10n ** 18n;
 let stableSymbol = 'dUSD';
 let collateralSymbol = 'AAPLx';
+let underlyingSymbol = 'AAPLx';
 let selectedAction = 'deposit';
 let snapshot = {};
 let pending = false;
@@ -62,6 +68,8 @@ let marketReady = false;
 let refreshing = false;
 let operatorBorrowPaused = false;
 let operatorSupplyPaused = false;
+let prepPreviewVersion = { wrap: 0, unwrap: 0 };
+let prepValid = { wrap: false, unwrap: false };
 
 const short = (address) => `${address.slice(0, 6)}…${address.slice(-4)}`;
 const number = (value, decimals, digits = 2) => Number(formatUnits(value, decimals)).toLocaleString(undefined, { maximumFractionDigits: digits });
@@ -98,6 +106,16 @@ function showTransaction(hash) {
   if (hash) ui.transactionLink.href = `${config.explorer}/tx/${hash}`;
 }
 
+function showPrepTransaction(hash) {
+  ui.prepTransactionLink.hidden = !hash;
+  if (hash) ui.prepTransactionLink.href = `${config.explorer}/tx/${hash}`;
+}
+
+function setPrepMessage(message, error = false) {
+  ui.prepMessage.textContent = message;
+  ui.prepMessage.style.color = error ? '#ff7a45' : '';
+}
+
 function explain(error) {
   const name = error?.revert?.name || (() => {
     try { return pool?.interface?.parseError(error?.data)?.name; }
@@ -126,9 +144,61 @@ function setPending(value, label = '') {
     : ({ deposit: `Deposit ${collateralSymbol}`, borrow: `Borrow ${stableSymbol}`, repay: `Repay ${stableSymbol}`, withdraw: `Withdraw ${collateralSymbol}`, supply: `Supply ${stableSymbol}`, redeem: 'Redeem liquidity shares' })[selectedAction];
   ui.mintStockButton.disabled = value || !account || !marketReady || !canMintDemo();
   ui.mintStableButton.disabled = value || !account || !marketReady || !canMintDemo();
+  ui.wrapButton.disabled = value || !account || !marketReady || !liveMarket() || !prepValid.wrap;
+  ui.unwrapButton.disabled = value || !account || !marketReady || !liveMarket() || !prepValid.unwrap;
+  ui.wrapMax.disabled = value || !account || !marketReady || !liveMarket();
+  ui.unwrapMax.disabled = value || !account || !marketReady || !liveMarket();
   ui.maxButton.disabled = value || !account || !marketReady || !writeEnabled();
   ui.refreshButton.disabled = value || refreshing || !pool;
   document.querySelectorAll('.tab').forEach((tab) => { tab.disabled = value; });
+}
+
+async function renderPrepPreview(kind) {
+  if (!liveMarket() || !collateral) return;
+  const version = ++prepPreviewVersion[kind];
+  const isWrap = kind === 'wrap';
+  const field = isWrap ? ui.wrapAmount : ui.unwrapAmount;
+  const output = isWrap ? ui.wrapPreview : ui.unwrapPreview;
+  const decimals = isWrap ? underlyingDecimals : collateralDecimals;
+  const raw = field.value.trim();
+  prepValid[kind] = false;
+  setPending(pending);
+  if (!raw) {
+    output.textContent = isWrap ? 'Enter an amount to preview wrapped shares.' : `Enter an amount to preview ${underlyingSymbol} returned.`;
+    return;
+  }
+  if (!/^\d+(\.\d+)?$/.test(raw)) {
+    output.textContent = 'Enter a positive token amount.';
+    return;
+  }
+  let amount;
+  try { amount = parseUnits(raw, decimals); }
+  catch { output.textContent = 'Too many decimal places for this token.'; return; }
+  if (amount <= 0n) { output.textContent = 'Enter an amount greater than zero.'; return; }
+  const available = isWrap ? snapshot.underlyingBalance : snapshot.collateralBalance;
+  const maximum = isWrap ? snapshot.maxDeposit : snapshot.maxRedeem;
+  if (!account || available === undefined || maximum === undefined) {
+    output.textContent = account ? 'Wrapper balances are unavailable. Refresh to retry.' : 'Connect your wallet to check the available amount.';
+    return;
+  }
+  if (amount > available || amount > maximum) {
+    output.textContent = amount > available ? 'Amount exceeds your wallet balance.' : 'Amount exceeds the wrapper limit.';
+    return;
+  }
+  output.textContent = 'Checking the current wrapper conversion…';
+  try {
+    const preview = isWrap ? await collateral.previewDeposit(amount) : await collateral.previewRedeem(amount);
+    if (version !== prepPreviewVersion[kind]) return;
+    if (preview <= 0n) throw new Error('Conversion rounds to zero.');
+    output.textContent = isWrap
+      ? `Estimated ${number(preview, collateralDecimals, 6)} ${collateralSymbol} shares received.`
+      : `Estimated ${number(preview, underlyingDecimals, 6)} ${underlyingSymbol} returned.`;
+    prepValid[kind] = true;
+  } catch (error) {
+    if (version !== prepPreviewVersion[kind]) return;
+    output.textContent = `Could not preview conversion: ${explain(error)}`;
+  }
+  setPending(pending);
 }
 
 function renderQuote() {
@@ -202,6 +272,7 @@ async function connect() {
     writePool = pool.connect(signer);
     writeStable = stable.connect(signer);
     writeCollateral = collateral.connect(signer);
+    if (liveMarket()) writeUnderlying = underlying.connect(signer);
     ui.connectButton.textContent = short(account);
     ui.networkLabel.textContent = config.chainId === 196 ? 'X Layer Mainnet' : 'X Layer Testnet';
     ui.marketName.textContent = `${collateralSymbol} / ${stableSymbol}`;
@@ -262,17 +333,30 @@ async function refresh(force = false) {
           ? 'The reference market is closed, so new credit is reduced.'
           : 'The current oracle update permits borrowing within the displayed limit.';
     if (account) {
-      const [collateralAmount, debt, capacity, stableBalance, collateralBalance, shares] = await Promise.all([
+      const [collateralAmount, debt, capacity, stableBalance, collateralBalance, shares,
+        prepState] = await Promise.all([
         pool.collateralOf(account), pool.debtOf(account), pool.borrowCapacity(account),
         stable.balanceOf(account), collateral.balanceOf(account), pool.liquidityShares(account),
+        liveMarket() ? Promise.allSettled([
+          underlying.balanceOf(account), collateral.maxDeposit(account), collateral.maxRedeem(account),
+        ]) : Promise.resolve([]),
       ]);
-      snapshot = { collateralAmount, debt, capacity, assets, poolDebt, multiplier, stableBalance, collateralBalance, shares };
+      const prepReadable = prepState.length === 3 && prepState.every((result) => result.status === 'fulfilled');
+      const [underlyingBalance, maxDeposit, maxRedeem] = prepReadable ? prepState.map((result) => result.value) : [];
+      snapshot = { collateralAmount, debt, capacity, assets, poolDebt, multiplier, stableBalance,
+        collateralBalance, shares, underlyingBalance, maxDeposit, maxRedeem };
       ui.collateralValue.textContent = `${number(collateralAmount, collateralDecimals, 4)} ${collateralSymbol}`;
       ui.debtValue.textContent = `${number(debt, stableDecimals)} ${stableSymbol}`;
       ui.capacityValue.textContent = `${number(capacity > debt ? capacity - debt : 0n, stableDecimals)} ${stableSymbol}`;
       ui.walletCollateral.textContent = `${number(collateralBalance, collateralDecimals, 4)} ${collateralSymbol}`;
       ui.walletStable.textContent = `${number(stableBalance, stableDecimals, 4)} ${stableSymbol}`;
       ui.sharesValue.textContent = number(shares, stableDecimals, 4);
+      if (liveMarket()) {
+        ui.rawBalance.textContent = prepReadable ? `${number(underlyingBalance, underlyingDecimals, 6)} ${underlyingSymbol}` : '—';
+        ui.wrappedBalance.textContent = prepReadable ? `${number(collateralBalance, collateralDecimals, 6)} ${collateralSymbol}` : '—';
+        void renderPrepPreview('wrap');
+        void renderPrepPreview('unwrap');
+      }
       const underlyingAmount = collateralAmount * underlyingPerWhole / (10n ** BigInt(collateralDecimals));
       const valueUsd = available ? underlyingAmount * risk.price / (10n ** BigInt(underlyingDecimals)) : 0n;
       ui.positionValue.textContent = available ? number(valueUsd, 18) : '—';
@@ -294,6 +378,11 @@ async function refresh(force = false) {
     for (const rail of [ui.freshnessRail, ui.liquidityRail, ui.multiplierRail]) rail.style.width = '0%';
     ui.updatedAt.textContent = 'READ FAILED';
     snapshot = {};
+    if (liveMarket()) {
+      ui.rawBalance.textContent = '—';
+      ui.wrappedBalance.textContent = '—';
+      prepValid = { wrap: false, unwrap: false };
+    }
     currentRisk = undefined;
     marketReady = false;
     operatorBorrowPaused = false;
@@ -308,15 +397,59 @@ async function refresh(force = false) {
   }
 }
 
-async function approveIfNeeded(token, amount) {
-  const allowance = await token.allowance(account, config.pool);
+async function approveIfNeeded(token, amount, spender = config.pool, report = setMessage, link = showTransaction) {
+  const allowance = await token.allowance(account, spender);
   if (allowance >= amount) return;
   setPending(true, 'Approving…');
-  setMessage('Approve the exact amount in your wallet…');
-  const approval = await token.approve(config.pool, amount);
-  showTransaction(approval.hash);
+  report('Approve the exact amount in your wallet…');
+  const approval = await token.approve(spender, amount);
+  link(approval.hash);
   const receipt = await approval.wait();
   if (receipt?.status !== 1) throw new Error('Approval did not confirm successfully. Check the transaction before retrying.');
+}
+
+async function executePrep(kind) {
+  if (!liveMarket() || !account || !marketReady || pending || !prepValid[kind]) return;
+  const isWrap = kind === 'wrap';
+  const input = isWrap ? ui.wrapAmount : ui.unwrapAmount;
+  const label = isWrap ? 'Wrap' : 'Unwrap';
+  let amount;
+  try { amount = parseUnits(input.value.trim(), isWrap ? underlyingDecimals : collateralDecimals); }
+  catch { return setPrepMessage('Enter a valid token amount.', true); }
+  if (amount <= 0n) return setPrepMessage('Enter an amount greater than zero.', true);
+  try {
+    setPending(true, `${label} in progress…`);
+    showPrepTransaction();
+    await checkWallet();
+    const [balance, maximum] = isWrap
+      ? await Promise.all([underlying.balanceOf(account), collateral.maxDeposit(account)])
+      : await Promise.all([collateral.balanceOf(account), collateral.maxRedeem(account)]);
+    if (amount > balance || amount > maximum) throw new Error('Amount exceeds your current balance or wrapper limit.');
+    if (isWrap) {
+      await approveIfNeeded(writeUnderlying, amount, config.collateral, setPrepMessage, showPrepTransaction);
+      await checkWallet();
+    }
+    const estimated = isWrap
+      ? await writeCollateral.deposit.staticCall(amount, account)
+      : await writeCollateral.redeem.staticCall(amount, account, account);
+    if (estimated <= 0n) throw new Error('Wrapper conversion rounds to zero.');
+    setPrepMessage(`${label} submitted to your wallet. Confirm the X Layer transaction…`);
+    const transaction = isWrap
+      ? await writeCollateral.deposit(amount, account)
+      : await writeCollateral.redeem(amount, account, account);
+    showPrepTransaction(transaction.hash);
+    setPrepMessage(`${label} submitted: ${short(transaction.hash)}. Waiting for confirmation…`);
+    const receipt = await transaction.wait();
+    if (receipt?.status !== 1) throw new Error('Transaction did not confirm successfully. Check the explorer before retrying.');
+    input.value = '';
+    prepValid[kind] = false;
+    setPrepMessage(`${label} confirmed: ${transaction.hash}`);
+    await refresh(true);
+  } catch (error) {
+    setPrepMessage(`${label} failed: ${explain(error)}`, true);
+  } finally {
+    setPending(false);
+  }
 }
 
 async function checkWallet() {
@@ -437,6 +570,20 @@ ui.refreshButton.addEventListener('click', () => { if (quoteParams) refresh(); e
 ui.quoteAmount.addEventListener('input', renderQuote);
 ui.mintStockButton.addEventListener('click', () => mintDemo('stock'));
 ui.mintStableButton.addEventListener('click', () => mintDemo('stable'));
+ui.wrapAmount.addEventListener('input', () => { void renderPrepPreview('wrap'); });
+ui.unwrapAmount.addEventListener('input', () => { void renderPrepPreview('unwrap'); });
+ui.wrapMax.addEventListener('click', () => {
+  const amount = snapshot.underlyingBalance < snapshot.maxDeposit ? snapshot.underlyingBalance : snapshot.maxDeposit;
+  ui.wrapAmount.value = formatUnits(amount || 0n, underlyingDecimals);
+  void renderPrepPreview('wrap');
+});
+ui.unwrapMax.addEventListener('click', () => {
+  const amount = snapshot.collateralBalance < snapshot.maxRedeem ? snapshot.collateralBalance : snapshot.maxRedeem;
+  ui.unwrapAmount.value = formatUnits(amount || 0n, collateralDecimals);
+  void renderPrepPreview('unwrap');
+});
+ui.wrapButton.addEventListener('click', () => { void executePrep('wrap'); });
+ui.unwrapButton.addEventListener('click', () => { void executePrep('unwrap'); });
 document.querySelectorAll('.tab').forEach((tab) => tab.addEventListener('click', () => selectAction(tab.dataset.action)));
 window.ethereum?.on?.('accountsChanged', () => window.location.reload());
 window.ethereum?.on?.('chainChanged', () => window.location.reload());
@@ -452,6 +599,8 @@ async function init() {
     ui.startActions.hidden = true;
     ui.mainnetProof.hidden = true;
     ui.marketDescription.textContent = 'Isolated mainnet lending market';
+    ui.collateralPrep.hidden = false;
+    ui.wrapperLink.href = `${config.explorer}/address/${config.collateral}`;
   } else if (config.chainId === 196) {
     ui.environmentTitle.textContent = 'Mainnet transaction proof';
     ui.environmentCopy.textContent = 'This pool uses permissionless demo collateral. It is read-only here and must not receive user funds.';
@@ -501,10 +650,21 @@ async function init() {
         || issuerToken.toLowerCase() !== config.underlyingCollateral.toLowerCase()) {
         throw new Error('Wrapper and pool underlying do not match deployment configuration.');
       }
-      underlyingDecimals = Number(await new Contract(config.underlyingCollateral, erc20Abi, readProvider).decimals());
+      underlying = new Contract(config.underlyingCollateral, erc20Abi, readProvider);
+      [underlyingDecimals, underlyingSymbol] = await Promise.all([underlying.decimals(), underlying.symbol()]);
+      underlyingDecimals = Number(underlyingDecimals);
     }
     stableSymbol = stableName;
     collateralSymbol = collateralName;
+    if (live) {
+      ui.prepHeading.textContent = `Wrap ${underlyingSymbol} for the market`;
+      ui.rawBalanceLabel.textContent = `Wallet ${underlyingSymbol}`;
+      ui.wrappedBalanceLabel.textContent = `Wallet ${collateralSymbol}`;
+      ui.wrapButton.textContent = `Wrap ${underlyingSymbol}`;
+      ui.unwrapButton.textContent = `Unwrap ${collateralSymbol}`;
+      document.querySelector('label[for="wrapAmount"]').textContent = `${underlyingSymbol} to wrap`;
+      document.querySelector('label[for="unwrapAmount"]').textContent = `${collateralSymbol} shares to unwrap`;
+    }
     quoteParams = { baseLtv, closedFactor, minFreshness, minLiquidity };
     ui.marketName.textContent = `${collateralSymbol} / ${stableSymbol}`;
     ui.quoteLabel.textContent = `${collateralSymbol} amount`;

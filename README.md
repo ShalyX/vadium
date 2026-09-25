@@ -37,6 +37,8 @@ The proof supplied `0.01 USDG`, borrowed `0.005 USDG`, reduced capacity from `2.
 
 The browser prototype now lets a new testnet user mint demo AAPLx or dUSD, preview borrowing power before depositing, deposit collateral, borrow, repay, withdraw, supply liquidity, and redeem shares. Pool liquidity and the market risk state are visible before wallet connection. The oracle publisher is still operator-run; it is not an unattended data service. The mainnet USDG proof uses demo collateral and should be treated as transaction evidence, not as a live lending market for real collateral.
 
+When a reviewed mainnet market is configured with `marketMode: 'live'`, the app also shows the issuer wrapper flow: wallet balances, `previewDeposit`/`previewRedeem` estimates, exact-amount approval for raw xStock, wrap, and unwrap after collateral withdrawal. These controls remain hidden on the testnet demo and the read-only mainnet proof. Wrapping uses the current V2 ERC-4626 wrapper; it does not imply that a mainnet lending pool has been approved or deployed.
+
 The demo token contracts are deliberately permissionless faucets. They are not production assets. A production deployment requires real collateral contracts, reviewed oracle operations, and audited pool code.
 
 ## Verify locally

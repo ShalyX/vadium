@@ -36,6 +36,16 @@
           <div id="startActions" class="start-actions"><button id="mintStockButton" type="button" disabled>Get 10 demo AAPLx</button><button id="mintStableButton" type="button" disabled>Get 100 demo dUSD</button></div>
         </section>
 
+        <section id="collateralPrep" class="collateral-prep" aria-label="Prepare tokenized equity collateral" hidden>
+          <div class="prep-heading"><div><span class="section-label">PREPARE COLLATERAL</span><h2 id="prepHeading">Wrap AAPLx for the market</h2><p>Vadium accepts the current non-rebasing wrapper. Wrap raw AAPLx before depositing it, then unwrap shares after withdrawing them from the pool.</p></div><a id="wrapperLink" href="#" target="_blank" rel="noreferrer">View wrapper ↗</a></div>
+          <div class="prep-balances"><span id="rawBalanceLabel">Wallet AAPLx</span><strong id="rawBalance">—</strong><span id="wrappedBalanceLabel">Wallet wrapped AAPLx</span><strong id="wrappedBalance">—</strong></div>
+          <div class="prep-actions">
+            <div class="prep-action"><label for="wrapAmount">AAPLx to wrap</label><div class="prep-input"><input id="wrapAmount" inputmode="decimal" placeholder="0.00" autocomplete="off" /><button id="wrapMax" type="button">MAX</button></div><p id="wrapPreview">Enter an amount to preview wrapped shares.</p><button id="wrapButton" type="button" disabled>Wrap AAPLx</button></div>
+            <div class="prep-action"><label for="unwrapAmount">Wrapped shares to unwrap</label><div class="prep-input"><input id="unwrapAmount" inputmode="decimal" placeholder="0.00" autocomplete="off" /><button id="unwrapMax" type="button">MAX</button></div><p id="unwrapPreview">Enter an amount to preview AAPLx returned.</p><button id="unwrapButton" type="button" disabled>Unwrap shares</button></div>
+          </div>
+          <p id="prepMessage" class="prep-message" role="status" aria-live="polite"></p><a id="prepTransactionLink" class="transaction-link" href="#" target="_blank" rel="noreferrer" hidden>View transaction on X Layer ↗</a>
+        </section>
+
         <section class="quote-panel" aria-label="Borrowing power preview">
           <div class="quote-intro"><span class="section-label">BEFORE YOU DEPOSIT</span><h2>Check your borrowing power</h2><p id="quoteDescription">Enter an AAPLx amount to see how the same collateral is treated while the reference market is open, closed, or unavailable. This uses the latest onchain price and pool settings.</p></div>
           <label class="quote-field"><span id="quoteLabel">Demo AAPLx amount</span><input id="quoteAmount" inputmode="decimal" value="1" aria-label="Collateral amount" /></label>

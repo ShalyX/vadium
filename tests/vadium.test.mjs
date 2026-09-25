@@ -226,6 +226,29 @@ test('wrapped collateral uses underlying conversion for borrow and liquidation',
   assert.equal((await wrapper.balanceOf(await f.liquidator.getAddress())) - before, E(4.375));
 });
 
+test('borrower wraps underlying, deposits shares, withdraws, and unwraps', async () => {
+  const f = await fixture();
+  const borrower = await f.borrower.getAddress();
+  const wrapper = await deploy('MockWrapper', 'MockWrapper.sol', f.owner, [await f.stock.getAddress(), E(1.2)]);
+  const wrappedPool = await deploy('VadiumPool', 'VadiumPool.sol', f.owner, [
+    await f.stable.getAddress(), await wrapper.getAddress(), await f.oracle.getAddress(),
+    await f.stock.getAddress(), 6_500, 8_000, 7_500, 5_000, 3_000, 500, E(1_000_000),
+  ]);
+  assert.equal(await wrapper.previewDeposit(E(6)), E(5));
+  await (await f.stock.connect(f.borrower).approve(await wrapper.getAddress(), E(6))).wait();
+  await (await wrapper.connect(f.borrower).deposit(E(6), borrower)).wait();
+  assert.equal(await wrapper.balanceOf(borrower), E(5));
+  assert.equal(await f.stock.balanceOf(borrower), E(94));
+  await (await wrapper.connect(f.borrower).approve(await wrappedPool.getAddress(), E(5))).wait();
+  await (await wrappedPool.connect(f.borrower).depositCollateral(E(5))).wait();
+  assert.equal(await wrapper.maxRedeem(borrower), 0n);
+  await (await wrappedPool.connect(f.borrower).withdrawCollateral(E(5))).wait();
+  assert.equal(await wrapper.previewRedeem(E(5)), E(6));
+  await (await wrapper.connect(f.borrower).redeem(E(5), borrower, borrower)).wait();
+  assert.equal(await f.stock.balanceOf(borrower), E(100));
+  assert.equal(await wrapper.balanceOf(borrower), 0n);
+});
+
 test('pool rejects fee-on-transfer collateral instead of overstating a deposit', async () => {
   const f = await fixture();
   const feeToken = await deploy('MockFeeToken', 'MockFeeToken.sol', f.owner);

@@ -41,6 +41,7 @@ The signed report does not supply a defensible X Layer liquidation-depth score. 
 - [x] Verify issuer token, current wrapper, wrapper underlying, USDG route, and X Layer contract code for candidate assets.
 - [x] Reproduce local compilation, tests, and static build from this repository.
 - [x] Add wrapper-aware valuation to the local pool contract with a regression test.
+- [x] Add wallet wrap and unwrap controls for a configured live market, with wrapper previews and a local wrap → pool deposit → withdraw → unwrap test.
 - [ ] Decide launch asset and document market-specific LTV, liquidation threshold, debt ceiling, liquidity cap, and economics. The current pool has no interest or loss socialization model.
 - [x] Implement the local v10 report verifier adapter and test its price, session, replay, and corporate-action behavior against a mock verifier.
 - [ ] Test against a real signed X Layer report, then build monitored publication with bounded retries and outage alerts. Store raw publication inputs so onchain commitments can be independently checked.
