@@ -1,5 +1,9 @@
 node_modules/
 dist/
+public/
 .env
 .env.local
 deployments/*.local.json
+
+.vercel
+.env*

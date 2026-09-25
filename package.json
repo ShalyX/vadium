@@ -7,6 +7,6 @@
     "compile": "node scripts/compile.mjs",
     "deploy:demo": "node scripts/deploy-demo.mjs",
     "publish:risk": "node scripts/publish-risk.mjs",
-    "build": "node scripts/verify-web.mjs"
+    "build": "node scripts/build-web.mjs"
   }
 }
