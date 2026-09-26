@@ -3,9 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#0b0c0f" />
-    <meta name="description" content="Session-aware lending for tokenized equities on X Layer." />
-    <title>Vadium — Credit against your position</title>
+    <meta name="theme-color" content="#102d32" />
+    <meta name="description" content="Vadium credit workspace on X Layer." />
+    <title>Vadium — Credit workspace</title>
     <link rel="stylesheet" href="/src/style.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -14,20 +14,35 @@
   <body>
     <div id="app">
       <header class="topbar">
-        <a class="wordmark" href="#">VADIUM<span>.</span></a>
-        <div class="network"><i></i><span id="networkLabel">X Layer</span></div>
+        <a class="wordmark" href="#workspaceRoot" aria-label="Vadium workspace">V<span class="brand-rule"></span>VADIUM<span class="brand-point">.</span></a>
+        <div class="topbar-context"><span class="topbar-context-label">CREDIT WORKSPACE</span><div class="network"><i></i><span id="networkLabel">X Layer</span></div></div>
         <button id="connectButton" class="wallet-button" type="button">Connect wallet</button>
       </header>
 
-      <main id="workspaceRoot" data-view="position">
-        <nav class="view-nav" aria-label="Vadium sections">
-          <button class="view-link active" type="button" data-view-target="position" aria-current="page">Your position</button>
-          <button class="view-link" type="button" data-view-target="market">Market details</button>
-        </nav>
+      <main id="workspaceRoot" data-view="position" data-market="demo">
+        <aside class="app-sidebar" aria-label="Workspace navigation">
+          <div class="sidebar-top"><span class="sidebar-overline">WORKSPACE / 01</span><strong>Credit desk</strong><p>Manage a position and inspect the market behind it.</p></div>
+          <nav class="view-nav" aria-label="Vadium sections">
+            <span class="nav-heading">NAVIGATE</span>
+            <button class="view-link active" type="button" data-view-target="position" aria-current="page"><span class="nav-index">01</span><span>Position</span><span class="nav-arrow">↗</span></button>
+            <button class="view-link" type="button" data-view-target="market"><span class="nav-index">02</span><span>Market</span><span class="nav-arrow">↗</span></button>
+            <button class="view-link" type="button" data-view-target="proof"><span class="nav-index">03</span><span>Onchain proof</span><span class="nav-arrow">↗</span></button>
+          </nav>
+          <nav class="view-nav market-nav" aria-label="Collateral markets">
+            <span class="nav-heading">COLLATERAL</span>
+            <button class="view-link market-link active" type="button" data-market="demo" aria-pressed="true"><span class="nav-index">A</span><span>Demo AAPLx</span><span class="nav-arrow">↗</span></button>
+            <button class="view-link market-link" type="button" data-market="NVDAx" aria-pressed="false"><span class="nav-index">N</span><span>NVDAx</span><span class="nav-arrow">↗</span></button>
+            <button class="view-link market-link" type="button" data-market="TSLAx" aria-pressed="false"><span class="nav-index">T</span><span>TSLAx</span><span class="nav-arrow">↗</span></button>
+            <a class="view-link asset-route" href="/assets.html"><span class="nav-index">04</span><span>Wrap desk</span><span class="nav-arrow">↗</span></a>
+          </nav>
+          <div class="sidebar-foot"><div class="sidebar-foot-test"><span class="sidebar-overline">ENVIRONMENT</span><strong>Demo market</strong><p>Testnet tokens have no real-world value. Mainnet USDG proof is shown separately.</p><span class="sidebar-chain">XL / 1952</span></div><div class="sidebar-foot-proof"><span class="sidebar-overline">EVIDENCE NETWORK</span><strong>X Layer mainnet</strong><p>Historic transactions from the experimental USDG proof pool.</p><span class="sidebar-chain">XL / 196</span></div></div>
+        </aside>
+        <div class="workspace-content">
         <section class="hero">
-          <p class="eyebrow">VADIUM / X LAYER CREDIT</p>
-          <h1>Liquidity for<br /><em>the long position.</em></h1>
-          <p id="heroCopy" class="hero-copy">Borrow against tokenized stocks. See your collateral coverage, draw when eligible, and repay without selling your position.</p>
+          <div class="hero-heading"><p class="eyebrow">VADIUM / X LAYER</p><h1 class="view-title" data-title="position">Your credit workspace</h1><h1 class="view-title" data-title="market">Market details</h1><h1 class="view-title" data-title="proof">Onchain proof</h1></div>
+          <p id="heroCopy" class="hero-copy">Track collateral, available credit and repayment from one position workspace.</p>
+          <p class="view-description" data-description="market">Compare borrowing limits and inspect the latest onchain risk state for this demo market.</p>
+          <p class="view-description" data-description="proof">The transactions behind the mainnet USDG proof, with its demo collateral clearly marked.</p>
         </section>
 
         <section id="environmentNotice" class="demo-notice" aria-label="Market environment">
@@ -35,9 +50,20 @@
           <span id="environmentCopy">AAPLx and dUSD here are permissionless demo tokens with no real-world value. The separate USDG proof below uses real USDG on X Layer mainnet.</span>
         </section>
         <p id="connectionStatus" class="connection-status" role="status" aria-live="polite">Checking market data. You can connect your wallet now.</p>
+        <section id="facilityNotice" class="facility-notice" hidden>
+          <div>
+            <strong id="facilityTitle">Wrapped xStock desk</strong>
+            <span id="facilityCopy">This market uses the issuer V2 wrapper on X Layer mainnet. Wrap shares in your wallet. A Vadium USDG facility for this wrapper is not open, so wrapping does not borrow.</span>
+          </div>
+          <div class="facility-ident">
+            <div><span>Issuer token</span><a id="issuerTokenLink" href="#" target="_blank" rel="noreferrer">—</a></div>
+            <div><span>V2 wrapper</span><a id="facilityWrapperLink" href="#" target="_blank" rel="noreferrer">—</a></div>
+            <div><span>USDG</span><a id="facilityStableLink" href="#" target="_blank" rel="noreferrer">—</a></div>
+          </div>
+        </section>
 
         <section class="start-panel" aria-label="Get started">
-          <div><span class="section-label">START HERE</span><h2 id="startTitle">Try the lending flow</h2><p id="startCopy">Connect a wallet on X Layer testnet. Mint demo AAPLx to borrow, or mint demo dUSD to supply liquidity. Need gas? <a href="https://web3.okx.com/xlayer/faucet" target="_blank" rel="noreferrer">Get testnet OKB ↗</a></p></div>
+          <div><span class="section-label">01 / FUND YOUR TEST WALLET</span><h2 id="startTitle">Get started on testnet</h2><p id="startCopy">Connect a wallet on X Layer testnet. Mint demo AAPLx to borrow, or mint demo dUSD to supply liquidity. Need gas? <a href="https://web3.okx.com/xlayer/faucet" target="_blank" rel="noreferrer">Get testnet OKB ↗</a></p></div>
           <div id="startActions" class="start-actions"><button id="mintStockButton" type="button" disabled>Get 10 demo AAPLx</button><button id="mintStableButton" type="button" disabled>Get 100 demo dUSD</button></div>
         </section>
 
@@ -61,7 +87,7 @@
         <section class="terminal" aria-label="Vadium market">
           <div class="market-header">
             <div class="asset-lockup">
-              <div class="asset-icon">A</div>
+              <div id="assetIcon" class="asset-icon">A</div>
               <div><strong id="marketName">AAPLx / dUSD</strong><span id="marketDescription">Isolated demo lending market</span></div>
             </div>
             <div id="marketPill" class="status-pill neutral">LOADING MARKET</div>
@@ -86,13 +112,10 @@
                 <p id="coverageNote">Connect your wallet to see the borrowing limit and liquidation buffer for your position.</p>
               </div>
 
-              <div class="action-tabs" role="tablist">
-                <button class="tab active" data-action="deposit">Deposit</button>
-                <button class="tab" data-action="borrow">Borrow</button>
-                <button class="tab" data-action="repay">Repay</button>
-                <button class="tab" data-action="withdraw">Withdraw</button>
-                <button class="tab" data-action="supply">Supply</button>
-                <button class="tab" data-action="redeem">Redeem</button>
+              <div class="trade-heading"><span class="section-label">ACTIONS</span><strong>Manage your position</strong></div>
+              <div class="action-tabs" aria-label="Position actions">
+                <div class="tab-group"><span>AS BORROWER</span><div><button class="tab active" data-action="deposit">Deposit</button><button class="tab" data-action="borrow">Borrow</button><button class="tab" data-action="repay">Repay</button><button class="tab" data-action="withdraw">Withdraw</button></div></div>
+                <div class="tab-group"><span>AS LENDER</span><div><button class="tab" data-action="supply">Supply</button><button class="tab" data-action="redeem">Redeem</button></div></div>
               </div>
               <p id="actionHelp" class="action-help">Lock demo AAPLx as collateral. This does not create debt.</p>
               <label class="amount-field">
@@ -135,11 +158,12 @@
         </section>
 
         <section id="mainnetProof" class="mainnet-proof" aria-label="Real USDG transaction proof">
-          <span class="section-label">MAINNET PROOF</span>
-          <h2>A complete loan using real USDG</h2>
-          <p>On X Layer mainnet, the experimental pool supplied 0.01 USDG, borrowed 0.005 USDG, repaid while new borrowing was paused, and withdrew the full supply. Its collateral can be minted by anyone, so do not supply real funds to that pool.</p>
-          <div class="proof-links"><a href="https://www.okx.com/web3/explorer/xlayer/tx/0xa882397229c4ab8557a77f77bba2d790dec51184a3a8254469bc706f45d6d585" target="_blank" rel="noreferrer">Borrow transaction ↗</a><a href="https://www.okx.com/web3/explorer/xlayer/tx/0x218343687fdcb833a85d395b39a5b351da8de66b31d4a58cfd52d3c71272194b" target="_blank" rel="noreferrer">Repayment transaction ↗</a><a href="https://www.okx.com/web3/explorer/xlayer/address/0x5d2194c68E3b0902b0B2f95eDd53Bc2De31d18cd" target="_blank" rel="noreferrer">Mainnet pool ↗</a></div>
+          <div class="proof-head"><div><span class="section-label">X LAYER MAINNET / TRANSACTION RECORD</span><h2>Real USDG, documented end to end.</h2><p>The experimental pool supplied 0.01 USDG, borrowed 0.005 USDG, repaid while new borrowing was paused, and withdrew the full supply.</p></div><div class="proof-amount"><span>BORROWED</span><strong>0.005</strong><small>USDG</small></div></div>
+          <div class="proof-warning"><strong>Demo collateral</strong><span>Anyone can mint the collateral in this proof pool. It is transaction evidence only. Do not supply real funds to this pool.</span></div>
+          <div class="proof-timeline"><div><span>01</span><strong>Borrow USDG</strong><p>Credit drawn against demo AAPLx collateral.</p><a href="https://www.okx.com/web3/explorer/xlayer/tx/0xa882397229c4ab8557a77f77bba2d790dec51184a3a8254469bc706f45d6d585" target="_blank" rel="noreferrer">View transaction ↗</a></div><div><span>02</span><strong>Risk unavailable</strong><p>New borrowing was paused by a market risk update.</p><a href="https://www.okx.com/web3/explorer/xlayer/tx/0x108a9fe8932224d874ba22a24d2410d8e5fc335ff7dc0aafd4b2dc90b53b77e5" target="_blank" rel="noreferrer">View transaction ↗</a></div><div><span>03</span><strong>Repay during pause</strong><p>The borrower repaid while new credit was disabled.</p><a href="https://www.okx.com/web3/explorer/xlayer/tx/0x218343687fdcb833a85d395b39a5b351da8de66b31d4a58cfd52d3c71272194b" target="_blank" rel="noreferrer">View transaction ↗</a></div></div>
+          <div class="proof-links"><a href="https://www.okx.com/web3/explorer/xlayer/address/0x5d2194c68E3b0902b0B2f95eDd53Bc2De31d18cd" target="_blank" rel="noreferrer">Inspect mainnet pool ↗</a></div>
         </section>
+        </div>
       </main>
 
       <footer><span>Vadium</span><span>Built on X Layer</span></footer>

@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#102a32" />
+  <title>Vadium — X Layer assets</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/src/assets.css" />
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/">VADIUM<span>.</span></a>
+    <span class="chain">X LAYER MAINNET / ASSETS</span>
+    <button id="connectButton" type="button">Connect wallet</button>
+  </header>
+  <main>
+    <nav class="breadcrumb" aria-label="Vadium sections"><a href="/">← Position workspace</a><span>/</span><strong>Assets</strong></nav>
+    <section class="intro">
+      <div><p class="kicker">TOKENIZED EQUITY / X LAYER</p><h1>Prepare your<br /><em>position.</em></h1></div>
+      <p>Inspect the issuer’s X Layer tokens and current V2 wrappers. Convert a supported token into fixed-balance wrapper shares in your own wallet.</p>
+    </section>
+    <p class="notice"><strong>Asset flow only.</strong> These wrapper shares are not accepted by a live Vadium credit facility yet. Wrapping does not borrow USDG.</p>
+    <section class="desk" aria-label="Tokenized equity assets">
+      <div class="asset-list">
+        <p class="small-label">01 / CHOOSE AN ASSET</p>
+        <button class="asset-choice selected" type="button" data-asset="NVDAx" aria-pressed="true"><span class="asset-monogram">N</span><span><strong>NVDAx</strong><small>Nvidia exposure</small></span><i>↗</i></button>
+        <button class="asset-choice" type="button" data-asset="TSLAx" aria-pressed="false"><span class="asset-monogram">T</span><span><strong>TSLAx</strong><small>Tesla exposure</small></span><i>↗</i></button>
+        <p class="asset-footnote">xStocks provide tokenized economic exposure. They are not direct company shares.</p>
+      </div>
+      <div class="asset-workspace">
+        <div class="asset-heading"><div><p class="small-label">02 / INSPECT & CONVERT</p><h2 id="assetTitle">NVDAx <span>→</span> wrapped NVDAx</h2></div><span id="assetState" class="state">CHECKING CHAIN</span></div>
+        <div class="identity-grid">
+          <div><span>Issuer token</span><a id="tokenLink" href="#" target="_blank" rel="noreferrer">—</a></div>
+          <div><span>V2 wrapper</span><a id="wrapperLink" href="#" target="_blank" rel="noreferrer">—</a></div>
+          <div><span>Wrapper backing</span><strong id="backingValue">—</strong></div>
+        </div>
+        <div class="balances"><div><span>Raw token in wallet</span><strong id="rawBalance">Connect wallet</strong></div><div><span>Wrapped shares in wallet</span><strong id="shareBalance">Connect wallet</strong></div></div>
+        <div class="mode-tabs" role="tablist" aria-label="Conversion direction"><button id="wrapTab" type="button" class="active" aria-selected="true">Wrap token</button><button id="unwrapTab" type="button" aria-selected="false">Unwrap shares</button></div>
+        <label class="amount-label" for="amountInput" id="amountLabel">NVDAx amount</label>
+        <div class="amount-box"><input id="amountInput" inputmode="decimal" placeholder="0.00" autocomplete="off" /><button id="maxButton" type="button">MAX</button></div>
+        <p id="preview" class="preview">Enter an amount to see the onchain wrapper estimate.</p>
+        <button id="actionButton" class="primary" type="button" disabled>Connect wallet to wrap</button>
+        <p id="status" class="status" role="status" aria-live="polite">Checking the issuer token and wrapper on X Layer…</p>
+        <a id="transactionLink" class="transaction-link" target="_blank" rel="noreferrer" hidden>View transaction ↗</a>
+      </div>
+    </section>
+    <div class="source-row"><a href="https://docs.xstocks.fi/developers/wrapped-xstocks" target="_blank" rel="noreferrer">How xStock wrappers work ↗</a><span>Contracts are verified onchain before this page enables conversion.</span></div>
+  </main>
+  <script type="module" src="/src/assets.js"></script>
+</body>
+</html>

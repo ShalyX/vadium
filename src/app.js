@@ -1,5 +1,6 @@
 import { BrowserProvider, Contract, JsonRpcProvider, formatUnits, parseUnits } from '../vendor/ethers.min.js';
 import { calculateCoverage } from './coverage.js';
+import { MARKETS, XLAYER } from './markets.js';
 
 const config = window.VADIUM_CONFIG;
 
@@ -35,7 +36,8 @@ const ui = Object.fromEntries([
   'heroCopy','coverageState','currentLtvValue','liquidationPriceValue','liquidationBufferValue','coverageRail','coverageNote',
   'collateralPrep','prepHeading','wrapperLink','rawBalanceLabel','rawBalance','wrappedBalanceLabel','wrappedBalance',
   'wrapAmount','wrapMax','wrapPreview','wrapButton','unwrapAmount','unwrapMax','unwrapPreview','unwrapButton',
-  'prepMessage','prepTransactionLink','connectionStatus','workspaceRoot',
+  'prepMessage','prepTransactionLink','connectionStatus','workspaceRoot','facilityNotice','facilityTitle','facilityCopy',
+  'issuerTokenLink','facilityWrapperLink','facilityStableLink','assetIcon',
 ].map((id) => [id, $(id)]));
 
 let provider;
@@ -72,15 +74,26 @@ let operatorBorrowPaused = false;
 let operatorSupplyPaused = false;
 let prepPreviewVersion = { wrap: 0, unwrap: 0 };
 let prepValid = { wrap: false, unwrap: false };
+let selectedMarket = 'demo';
 
 const short = (address) => `${address.slice(0, 6)}…${address.slice(-4)}`;
 const number = (value, decimals, digits = 2) => Number(formatUnits(value, decimals)).toLocaleString(undefined, { maximumFractionDigits: digits });
 const pct = (bps) => `${(Number(bps) / 100).toFixed(Number(bps) % 100 ? 1 : 0)}%`;
-const configured = () => config && [config.pool, config.oracle, config.stable, config.collateral].every((value) => /^0x[0-9a-fA-F]{40}$/.test(value));
-const canMintDemo = () => configured() && config.chainId === 1952 && config.demoAssets === true;
-const liveMarket = () => config?.chainId === 196 && config.marketMode === 'live'
-  && config.demoAssets === false && /^0x[0-9a-fA-F]{40}$/.test(config.underlyingCollateral);
+const isAddress = (value) => /^0x[0-9a-fA-F]{40}$/.test(value);
+const configured = () => config && [config.pool, config.oracle, config.stable, config.collateral].every(isAddress);
+const canMintDemo = () => selectedMarket === 'demo' && configured() && config.chainId === 1952 && config.demoAssets === true;
+const liveMarket = () => selectedMarket === 'demo' && config?.chainId === 196 && config.marketMode === 'live'
+  && config.demoAssets === false && isAddress(config.underlyingCollateral);
+const isAssetDesk = () => Boolean(MARKETS[selectedMarket]);
+const wrapMarket = () => liveMarket() || isAssetDesk();
+const facilityDeployment = () => {
+  const deployed = config?.facilities?.[selectedMarket];
+  return deployed && isAddress(deployed.pool) ? deployed : null;
+};
 const writeEnabled = () => canMintDemo() || liveMarket();
+const activeNetwork = () => isAssetDesk()
+  ? { chainId: XLAYER.chainId, rpcUrl: XLAYER.rpcUrl, explorer: XLAYER.explorer, walletRpcUrl: XLAYER.rpcUrl }
+  : { chainId: config.chainId, rpcUrl: config.rpcUrl, explorer: config.explorer, walletRpcUrl: config.walletRpcUrl || config.rpcUrl };
 const timeout = (promise, ms) => Promise.race([
   promise,
   new Promise((_, reject) => window.setTimeout(() => reject(new Error('RPC request timed out')), ms)),
@@ -95,7 +108,7 @@ async function probeRpc(url) {
   });
   if (!response.ok) throw new Error(`RPC returned HTTP ${response.status}`);
   const body = await response.json();
-  if (Number.parseInt(body.result, 16) !== config.chainId) throw new Error('RPC chain ID mismatch');
+  if (Number.parseInt(body.result, 16) !== activeNetwork().chainId) throw new Error('RPC chain ID mismatch');
 }
 
 function setMessage(message, error = false) {
@@ -107,12 +120,12 @@ function setMessage(message, error = false) {
 
 function showTransaction(hash) {
   ui.transactionLink.hidden = !hash;
-  if (hash) ui.transactionLink.href = `${config.explorer}/tx/${hash}`;
+  if (hash) ui.transactionLink.href = `${activeNetwork().explorer}/tx/${hash}`;
 }
 
 function showPrepTransaction(hash) {
   ui.prepTransactionLink.hidden = !hash;
-  if (hash) ui.prepTransactionLink.href = `${config.explorer}/tx/${hash}`;
+  if (hash) ui.prepTransactionLink.href = `${activeNetwork().explorer}/tx/${hash}`;
 }
 
 function setPrepMessage(message, error = false) {
@@ -144,21 +157,22 @@ function setPending(value, label = '') {
   ui.actionButton.disabled = value || !account || !marketReady || !writeEnabled()
     || (selectedAction === 'borrow' && (!riskAvailable || multiplier === 0n || operatorBorrowPaused))
     || (selectedAction === 'supply' && operatorSupplyPaused);
-  ui.actionButton.textContent = value ? label : !writeEnabled() && config?.chainId === 196 ? 'Read-only deployment'
+  ui.actionButton.textContent = value ? label : isAssetDesk() && !writeEnabled() ? 'Facility not deployed'
+    : !writeEnabled() && activeNetwork().chainId === 196 ? 'Read-only deployment'
     : ({ deposit: `Deposit ${collateralSymbol}`, borrow: `Borrow ${stableSymbol}`, repay: `Repay ${stableSymbol}`, withdraw: `Withdraw ${collateralSymbol}`, supply: `Supply ${stableSymbol}`, redeem: 'Redeem liquidity shares' })[selectedAction];
   ui.mintStockButton.disabled = value || !account || !marketReady || !canMintDemo();
   ui.mintStableButton.disabled = value || !account || !marketReady || !canMintDemo();
-  ui.wrapButton.disabled = value || !account || !marketReady || !liveMarket() || !prepValid.wrap;
-  ui.unwrapButton.disabled = value || !account || !marketReady || !liveMarket() || !prepValid.unwrap;
-  ui.wrapMax.disabled = value || !account || !marketReady || !liveMarket();
-  ui.unwrapMax.disabled = value || !account || !marketReady || !liveMarket();
+  ui.wrapButton.disabled = value || !account || !marketReady || !wrapMarket() || !prepValid.wrap;
+  ui.unwrapButton.disabled = value || !account || !marketReady || !wrapMarket() || !prepValid.unwrap;
+  ui.wrapMax.disabled = value || !account || !marketReady || !wrapMarket();
+  ui.unwrapMax.disabled = value || !account || !marketReady || !wrapMarket();
   ui.maxButton.disabled = value || !account || !marketReady || !writeEnabled();
   ui.refreshButton.disabled = value || refreshing || !pool;
   document.querySelectorAll('.tab').forEach((tab) => { tab.disabled = value; });
 }
 
 async function renderPrepPreview(kind) {
-  if (!liveMarket() || !collateral) return;
+  if (!wrapMarket() || !collateral) return;
   const version = ++prepPreviewVersion[kind];
   const isWrap = kind === 'wrap';
   const field = isWrap ? ui.wrapAmount : ui.unwrapAmount;
@@ -250,7 +264,8 @@ function renderQuote() {
 }
 
 async function ensureNetwork() {
-  const chainHex = `0x${config.chainId.toString(16)}`;
+  const network = activeNetwork();
+  const chainHex = `0x${network.chainId.toString(16)}`;
   try {
     await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: chainHex }] });
   } catch (error) {
@@ -258,16 +273,16 @@ async function ensureNetwork() {
     if (!unknownChain) throw error;
     await window.ethereum.request({ method: 'wallet_addEthereumChain', params: [{
       chainId: chainHex,
-      chainName: config.chainId === 196 ? 'X Layer' : 'X Layer Testnet',
+      chainName: network.chainId === 196 ? 'X Layer' : 'X Layer Testnet',
       nativeCurrency: { name: 'OKB', symbol: 'OKB', decimals: 18 },
-      rpcUrls: [activeRpcUrl], blockExplorerUrls: [config.explorer],
+      rpcUrls: [network.walletRpcUrl], blockExplorerUrls: [network.explorer],
     }] });
   }
 }
 
 async function connect() {
   if (!window.ethereum) return setMessage('No wallet detected. Open Vadium in a browser with OKX Wallet or another EVM wallet installed.', true);
-  if (!configured()) return setMessage('Deployment addresses are not configured yet.', true);
+  if (!isAssetDesk() && !configured()) return setMessage('Deployment addresses are not configured yet.', true);
   try {
     ui.connectButton.disabled = true;
     await ensureNetwork();
@@ -277,15 +292,19 @@ async function connect() {
     if (pool) writePool = pool.connect(signer);
     if (stable) writeStable = stable.connect(signer);
     if (collateral) writeCollateral = collateral.connect(signer);
-    if (liveMarket() && underlying) writeUnderlying = underlying.connect(signer);
+    if (wrapMarket() && underlying) writeUnderlying = underlying.connect(signer);
     ui.connectButton.textContent = short(account);
-    ui.networkLabel.textContent = config.chainId === 196 ? 'X Layer Mainnet' : 'X Layer Testnet';
+    ui.networkLabel.textContent = activeNetwork().chainId === 196 ? 'X Layer Mainnet' : 'X Layer Testnet';
     ui.marketName.textContent = `${collateralSymbol} / ${stableSymbol}`;
-    ui.oracleLink.href = `${config.explorer}/address/${config.oracle}`;
-    setMessage(pool ? 'Wallet connected. Loading your position…' : 'Wallet connected. Market data is still loading; use Refresh if it does not appear.');
+    setMessage(isAssetDesk() ? 'Wallet connected. Loading wrapper balances…' : pool ? 'Wallet connected. Loading your position…' : 'Wallet connected. Market data is still loading; use Refresh if it does not appear.');
     setPending(false);
-    if (pool) await refresh();
-    if (marketReady) setMessage(writeEnabled() ? 'Wallet connected. Your position is up to date.' : 'Wallet connected. This deployment is read-only.');
+    if (isAssetDesk()) await refreshAssetDesk();
+    else if (pool) await refresh();
+    if (marketReady) {
+      setMessage(writeEnabled() ? 'Wallet connected. Your position is up to date.'
+        : isAssetDesk() ? 'Wallet connected. You can wrap or unwrap the issuer token. Borrowing is not enabled.'
+        : 'Wallet connected. This deployment is read-only.');
+    }
   } catch (error) {
     setMessage(explain(error), true);
   } finally {
@@ -476,7 +495,7 @@ async function approveIfNeeded(token, amount, spender = config.pool, report = se
 }
 
 async function executePrep(kind) {
-  if (!liveMarket() || !account || !marketReady || pending || !prepValid[kind]) return;
+  if (!wrapMarket() || !account || !marketReady || pending || !prepValid[kind]) return;
   const isWrap = kind === 'wrap';
   const input = isWrap ? ui.wrapAmount : ui.unwrapAmount;
   const label = isWrap ? 'Wrap' : 'Unwrap';
@@ -493,7 +512,7 @@ async function executePrep(kind) {
       : await Promise.all([collateral.balanceOf(account), collateral.maxRedeem(account)]);
     if (amount > balance || amount > maximum) throw new Error('Amount exceeds your current balance or wrapper limit.');
     if (isWrap) {
-      await approveIfNeeded(writeUnderlying, amount, config.collateral, setPrepMessage, showPrepTransaction);
+      await approveIfNeeded(writeUnderlying, amount, await collateral.getAddress(), setPrepMessage, showPrepTransaction);
       await checkWallet();
     }
     const estimated = isWrap
@@ -511,7 +530,8 @@ async function executePrep(kind) {
     input.value = '';
     prepValid[kind] = false;
     setPrepMessage(`${label} confirmed: ${transaction.hash}`);
-    await refresh(true);
+    if (isAssetDesk()) await refreshAssetDesk();
+    else await refresh(true);
   } catch (error) {
     setPrepMessage(`${label} failed: ${explain(error)}`, true);
   } finally {
@@ -524,7 +544,7 @@ async function checkWallet() {
     throw new Error('The connected account changed. Reconnect your wallet before continuing.');
   }
   const network = await provider.getNetwork();
-  if (Number(network.chainId) !== config.chainId) throw new Error('Switch your wallet back to the configured X Layer network.');
+  if (Number(network.chainId) !== activeNetwork().chainId) throw new Error('Switch your wallet back to the configured X Layer network.');
 }
 
 async function mintDemo(kind) {
@@ -606,7 +626,7 @@ function selectAction(action) {
   ui.amountLabel.textContent = action === 'redeem' ? 'Liquidity shares to redeem' : `${collateralAction ? collateralSymbol : stableSymbol} amount`;
   ui.actionHelp.textContent = {
     deposit: `Lock ${collateralSymbol} as collateral. This does not create debt.`,
-    borrow: `Borrow ${stableSymbol} within your current limit. The limit can shrink when market conditions change.`,
+    borrow: !riskAvailable ? 'New borrowing is paused until the oracle publishes a current update. Existing positions can still be topped up or repaid.' : `Borrow ${stableSymbol} within your current limit. The limit can shrink when market conditions change.`,
     repay: `Return borrowed ${stableSymbol}. Repayment remains available during a risk pause.`,
     withdraw: `Release collateral. Any remaining debt must stay within the current limit.`,
     supply: `Add ${stableSymbol} liquidity and receive pool shares.`,
@@ -633,7 +653,11 @@ function fillMax() {
 ui.connectButton.addEventListener('click', connect);
 ui.actionButton.addEventListener('click', execute);
 ui.maxButton.addEventListener('click', fillMax);
-ui.refreshButton.addEventListener('click', () => { if (quoteParams) refresh(); else init(); });
+ui.refreshButton.addEventListener('click', () => {
+  if (isAssetDesk()) void refreshAssetDesk();
+  else if (quoteParams) void refresh();
+  else void init();
+});
 ui.quoteAmount.addEventListener('input', renderQuote);
 ui.mintStockButton.addEventListener('click', () => mintDemo('stock'));
 ui.mintStableButton.addEventListener('click', () => mintDemo('stable'));
@@ -652,6 +676,7 @@ ui.unwrapMax.addEventListener('click', () => {
 ui.wrapButton.addEventListener('click', () => { void executePrep('wrap'); });
 ui.unwrapButton.addEventListener('click', () => { void executePrep('unwrap'); });
 document.querySelectorAll('.tab').forEach((tab) => tab.addEventListener('click', () => selectAction(tab.dataset.action)));
+document.querySelectorAll('.market-link[data-market]').forEach((button) => button.addEventListener('click', () => { void selectMarket(button.dataset.market); }));
 document.querySelectorAll('[data-view-target]').forEach((button) => button.addEventListener('click', () => {
   const view = button.dataset.viewTarget;
   ui.workspaceRoot.dataset.view = view;
@@ -664,8 +689,203 @@ document.querySelectorAll('[data-view-target]').forEach((button) => button.addEv
 window.ethereum?.on?.('accountsChanged', () => window.location.reload());
 window.ethereum?.on?.('chainChanged', () => window.location.reload());
 
+function resetContracts() {
+  pool = undefined;
+  oracle = undefined;
+  stable = undefined;
+  collateral = undefined;
+  underlying = undefined;
+  writePool = undefined;
+  writeStable = undefined;
+  writeCollateral = undefined;
+  writeUnderlying = undefined;
+  readProvider?.destroy?.();
+  readProvider = undefined;
+  marketReady = false;
+  snapshot = {};
+  quoteParams = undefined;
+  currentRisk = undefined;
+  riskAvailable = false;
+  multiplier = 0n;
+  operatorBorrowPaused = false;
+  operatorSupplyPaused = false;
+  prepValid = { wrap: false, unwrap: false };
+}
+
+async function refreshAssetDesk() {
+  if (!isAssetDesk() || !collateral || !underlying || !stable) return;
+  try {
+    const conversion = await timeout(collateral.convertToAssets(10n ** BigInt(collateralDecimals)), 8_000);
+    if (conversion <= 0n) throw new Error('Wrapped collateral conversion is unavailable.');
+    underlyingPerWhole = conversion;
+    ui.sessionValue.textContent = 'NO FACILITY';
+    ui.permissionValue.textContent = 'NOT DEPLOYED';
+    ui.marketPill.textContent = 'WRAP ONLY';
+    ui.marketPill.className = 'status-pill blocked';
+    ui.freshnessValue.textContent = '—';
+    ui.liquidityValue.textContent = '—';
+    ui.multiplierValue.textContent = '—';
+    for (const rail of [ui.freshnessRail, ui.liquidityRail, ui.multiplierRail]) rail.style.width = '0%';
+    ui.poolLiquidity.textContent = '—';
+    ui.poolDebt.textContent = '—';
+    ui.baseLtvValue.textContent = '—';
+    ui.liquidationLtvValue.textContent = '—';
+    ui.updatedAt.textContent = facilityDeployment() ? 'POOL CONFIGURED / PAUSED' : 'NO CREDIT FACILITY';
+    ui.riskExplanation.textContent = 'The issuer wrapper is verified on X Layer. New USDG credit is not available until a reviewed facility is deployed and unpaused.';
+    ui.positionValue.textContent = '—';
+    ui.collateralValue.textContent = '—';
+    ui.debtValue.textContent = '—';
+    ui.capacityValue.textContent = '—';
+    ui.sharesValue.textContent = '—';
+    renderCoverage();
+    if (account) {
+      const [raw, shares, cash, maxDeposit, maxRedeem] = await Promise.all([
+        underlying.balanceOf(account), collateral.balanceOf(account), stable.balanceOf(account),
+        collateral.maxDeposit(account), collateral.maxRedeem(account),
+      ]);
+      snapshot = {
+        underlyingBalance: raw, collateralBalance: shares, stableBalance: cash,
+        maxDeposit, maxRedeem, collateralAmount: 0n, debt: 0n, capacity: 0n, shares: 0n,
+      };
+      ui.walletCollateral.textContent = `${number(shares, collateralDecimals, 6)} ${collateralSymbol}`;
+      ui.walletStable.textContent = `${number(cash, stableDecimals, 4)} ${stableSymbol}`;
+      ui.rawBalance.textContent = `${number(raw, underlyingDecimals, 6)} ${underlyingSymbol}`;
+      ui.wrappedBalance.textContent = `${number(shares, collateralDecimals, 6)} ${collateralSymbol}`;
+      void renderPrepPreview('wrap');
+      void renderPrepPreview('unwrap');
+    } else {
+      ui.walletCollateral.textContent = 'Connect wallet';
+      ui.walletStable.textContent = 'Connect wallet';
+      ui.rawBalance.textContent = 'Connect wallet';
+      ui.wrappedBalance.textContent = 'Connect wallet';
+    }
+    marketReady = true;
+    ui.refreshButton.disabled = false;
+    setPending(pending);
+  } catch (error) {
+    marketReady = false;
+    ui.marketPill.textContent = 'READ FAILED';
+    ui.marketPill.className = 'status-pill blocked';
+    setMessage(`Could not read wrapper state: ${explain(error)}`, true);
+    setPending(pending);
+  }
+}
+
+async function loadAssetDesk(symbol) {
+  const market = MARKETS[symbol];
+  const network = activeNetwork();
+  ui.facilityNotice.hidden = false;
+  ui.facilityTitle.textContent = `${market.symbol} wrapper desk`;
+  ui.facilityCopy.textContent = `${market.name} uses the issuer V2 wrapper on X Layer mainnet. Wrap shares in your own wallet. No Vadium USDG facility is open for this wrapper, so wrapping does not borrow.`;
+  ui.issuerTokenLink.href = `${network.explorer}/address/${market.token}`;
+  ui.issuerTokenLink.textContent = short(market.token);
+  ui.facilityWrapperLink.href = `${network.explorer}/address/${market.wrapper}`;
+  ui.facilityWrapperLink.textContent = short(market.wrapper);
+  ui.facilityStableLink.href = `${network.explorer}/address/${XLAYER.usdg}`;
+  ui.facilityStableLink.textContent = short(XLAYER.usdg);
+  ui.environmentTitle.textContent = 'X Layer mainnet assets';
+  ui.environmentCopy.textContent = 'These are the issuer token and current V2 wrapper. They are not demo faucets. A credit line against them is not open.';
+  ui.heroCopy.textContent = `Wrap ${market.symbol} into the current non-rebasing wrapper. Collateral deposit and USDG borrowing stay disabled until a reviewed facility exists.`;
+  ui.marketDescription.textContent = 'Issuer wrapper / no credit facility';
+  ui.assetIcon.textContent = market.symbol.slice(0, 1);
+  ui.collateralPrep.hidden = false;
+  ui.startActions.hidden = true;
+  ui.networkLabel.textContent = 'X Layer Mainnet';
+  ui.marketName.textContent = `${market.symbol} wrapper / USDG`;
+  ui.oracleLink.href = `${network.explorer}/address/${market.wrapper}`;
+  setMessage(`Checking ${market.symbol} and its V2 wrapper on X Layer…`);
+  try {
+    const localPreview = ['127.0.0.1', 'localhost'].includes(window.location.hostname);
+    const rpcCandidates = localPreview ? ['/rpc/mainnet', network.rpcUrl] : [network.rpcUrl];
+    let lastError;
+    for (const rpcUrl of rpcCandidates) {
+      try {
+        await probeRpc(rpcUrl);
+        readProvider = new JsonRpcProvider(new URL(rpcUrl, window.location.href).href, network.chainId, { staticNetwork: true, batchMaxCount: 1 });
+        activeRpcUrl = new URL(rpcUrl, window.location.href).href;
+        lastError = undefined;
+        break;
+      } catch (error) {
+        lastError = error;
+        readProvider?.destroy?.();
+        readProvider = undefined;
+      }
+    }
+    if (!readProvider) throw lastError || new Error('X Layer mainnet RPC did not respond');
+    underlying = new Contract(market.token, erc20Abi, readProvider);
+    collateral = new Contract(market.wrapper, erc20Abi, readProvider);
+    stable = new Contract(XLAYER.usdg, erc20Abi, readProvider);
+    const [asset, tokenCode, wrapperCode, tokenSymbol, wrapSymbol, tokenDecimals, wrapDecimals, usdgSymbol, usdgDecimals] = await Promise.all([
+      collateral.asset(), readProvider.getCode(market.token), readProvider.getCode(market.wrapper),
+      underlying.symbol(), collateral.symbol(), underlying.decimals(), collateral.decimals(),
+      stable.symbol(), stable.decimals(),
+    ]);
+    if (tokenCode === '0x' || wrapperCode === '0x') throw new Error('Token or wrapper code is missing on X Layer.');
+    if (asset.toLowerCase() !== market.token) throw new Error('Wrapper asset() does not match the issuer token. Conversion is blocked.');
+    if (tokenSymbol.toLowerCase() !== market.symbol.toLowerCase()) throw new Error('Unexpected issuer token symbol.');
+    underlyingSymbol = tokenSymbol;
+    collateralSymbol = wrapSymbol;
+    stableSymbol = usdgSymbol;
+    underlyingDecimals = Number(tokenDecimals);
+    collateralDecimals = Number(wrapDecimals);
+    stableDecimals = Number(usdgDecimals);
+    ui.prepHeading.textContent = `Wrap ${underlyingSymbol} into the current V2 wrapper`;
+    ui.wrapperLink.href = `${network.explorer}/address/${market.wrapper}`;
+    ui.rawBalanceLabel.textContent = `Wallet ${underlyingSymbol}`;
+    ui.wrappedBalanceLabel.textContent = `Wallet ${collateralSymbol}`;
+    ui.wrapButton.textContent = `Wrap ${underlyingSymbol}`;
+    ui.unwrapButton.textContent = `Unwrap ${collateralSymbol}`;
+    document.querySelector('label[for="wrapAmount"]').textContent = `${underlyingSymbol} to wrap`;
+    document.querySelector('label[for="unwrapAmount"]').textContent = `${collateralSymbol} shares to unwrap`;
+    ui.walletCollateralLabel.textContent = `Wallet ${collateralSymbol}`;
+    ui.walletStableLabel.textContent = `Wallet ${stableSymbol}`;
+    ui.marketName.textContent = `${collateralSymbol} / ${stableSymbol}`;
+    if (signer) {
+      writeCollateral = collateral.connect(signer);
+      writeUnderlying = underlying.connect(signer);
+      writeStable = stable.connect(signer);
+    }
+    await refreshAssetDesk();
+    ui.connectButton.disabled = false;
+    ui.connectButton.textContent = account ? short(account) : 'Connect wallet';
+    setMessage(account
+      ? 'Wrapper verified on X Layer. Review the onchain estimate before converting.'
+      : 'Issuer token and V2 wrapper match on X Layer. Connect a mainnet wallet to wrap.');
+  } catch (error) {
+    marketReady = false;
+    ui.marketPill.textContent = 'READ FAILED';
+    ui.marketPill.className = 'status-pill blocked';
+    ui.connectButton.disabled = false;
+    setMessage(`Could not verify ${symbol} on X Layer: ${explain(error)}`, true);
+  }
+}
+
+async function selectMarket(id) {
+  if (pending || id === selectedMarket) return;
+  selectedMarket = id;
+  ui.workspaceRoot.dataset.market = id;
+  document.querySelectorAll('.market-link[data-market]').forEach((item) => {
+    const active = item.dataset.market === id;
+    item.classList.toggle('active', active);
+    item.setAttribute('aria-pressed', String(active));
+  });
+  resetContracts();
+  if (id === 'demo') return init();
+  return loadAssetDesk(id);
+}
+
 async function init() {
   if (!configured()) return setMessage('Contracts are not configured.', true);
+  ui.facilityNotice.hidden = true;
+  ui.assetIcon.textContent = 'A';
+  ui.environmentTitle.textContent = 'Interactive testnet prototype';
+  ui.environmentCopy.textContent = 'AAPLx and dUSD here are permissionless demo tokens with no real-world value. The separate USDG proof below uses real USDG on X Layer mainnet.';
+  ui.heroCopy.textContent = 'Track collateral, available credit and repayment from one position workspace.';
+  ui.startTitle.textContent = 'Get started on testnet';
+  ui.startCopy.innerHTML = 'Connect a wallet on X Layer testnet. Mint demo AAPLx to borrow, or mint demo dUSD to supply liquidity. Need gas? <a href="https://web3.okx.com/xlayer/faucet" target="_blank" rel="noreferrer">Get testnet OKB ↗</a>';
+  ui.startActions.hidden = false;
+  ui.collateralPrep.hidden = true;
+  ui.marketDescription.textContent = 'Isolated demo lending market';
   const live = liveMarket();
   if (live) {
     ui.heroCopy.textContent = 'Draw USDG against wrapped tokenized stocks. Track collateral coverage and repay without selling your position.';
@@ -692,22 +912,35 @@ async function init() {
   try {
     let marketDetails;
     let lastError;
-    for (const rpcUrl of [config.rpcUrl, ...(config.rpcFallbackUrls || [])]) {
+    const localPreview = ['127.0.0.1', 'localhost'].includes(window.location.hostname);
+    const rpcCandidates = [config.rpcUrl, ...(config.rpcFallbackUrls || [])]
+      .filter((url) => localPreview || !url.startsWith('/'));
+    if (localPreview && rpcCandidates.includes('/rpc')) {
+      rpcCandidates.splice(rpcCandidates.indexOf('/rpc'), 1);
+      rpcCandidates.unshift('/rpc');
+    }
+    for (const rpcUrl of rpcCandidates) {
       try {
         await probeRpc(rpcUrl);
-        readProvider = new JsonRpcProvider(rpcUrl, config.chainId, { staticNetwork: true });
+        const providerUrl = new URL(rpcUrl, window.location.href).href;
+        readProvider = new JsonRpcProvider(providerUrl, config.chainId, { staticNetwork: true, batchMaxCount: 1 });
         pool = new Contract(config.pool, poolAbi, readProvider);
         oracle = new Contract(config.oracle, oracleAbi, readProvider);
         stable = new Contract(config.stable, erc20Abi, readProvider);
         collateral = new Contract(config.collateral, erc20Abi, readProvider);
-        marketDetails = await timeout(Promise.all([
-          pool.stable(), pool.collateral(), stable.decimals(), collateral.decimals(), stable.symbol(), collateral.symbol(),
-          pool.baseBorrowLtvBps(), pool.liquidationLtvBps(), pool.closedSessionFactorBps(), pool.minFreshnessBps(), pool.minLiquidityBps(),
-        ]), 10_000);
-        activeRpcUrl = rpcUrl;
+        const reads = [
+          () => pool.stable(), () => pool.collateral(), () => stable.decimals(), () => collateral.decimals(),
+          () => stable.symbol(), () => collateral.symbol(), () => pool.baseBorrowLtvBps(),
+          () => pool.liquidationLtvBps(), () => pool.closedSessionFactorBps(),
+          () => pool.minFreshnessBps(), () => pool.minLiquidityBps(),
+        ];
+        marketDetails = [];
+        for (const read of reads) marketDetails.push(await timeout(read(), 8_000));
+        activeRpcUrl = providerUrl;
         break;
       } catch (error) {
         lastError = error;
+        marketDetails = undefined;
         readProvider?.destroy();
       }
     }
@@ -761,7 +994,9 @@ async function init() {
     await refresh();
     ui.connectButton.disabled = false;
     ui.connectButton.textContent = account ? short(account) : 'Connect wallet';
-    setMessage(account ? 'Wallet connected. Position loaded.' : 'Market loaded. Connect your wallet to start.');
+    setMessage(!riskAvailable
+      ? 'Market loaded. Oracle data is stale, so new borrowing is paused. Deposits and repayments remain available.'
+      : account ? 'Wallet connected. Position loaded.' : 'Market loaded. Connect your wallet to start.');
     window.setInterval(refresh, 20_000);
   } catch (error) {
     setMessage(`Could not initialize market: ${explain(error)}`, true);

@@ -7,6 +7,7 @@ import { ethers } from 'ethers';
 import ganache from 'ganache';
 import solc from 'solc';
 import { calculateCoverage } from '../src/coverage.js';
+import { INTEGRATION_TERMS, MARKETS, XLAYER } from '../src/markets.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 function compile() {

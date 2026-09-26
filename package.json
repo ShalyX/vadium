@@ -7,6 +7,7 @@
     "compile": "node scripts/compile.mjs",
     "deploy:demo": "node scripts/deploy-demo.mjs",
     "deploy:usdg": "node scripts/deploy-usdg-demo.mjs",
+    "deploy:xstock": "node scripts/deploy-xstock-facility.mjs",
     "demo:loan": "node scripts/run-loan-demo.mjs",
     "demo:usdg": "node scripts/run-usdg-loan-demo.mjs",
     "publish:risk": "node scripts/publish-risk.mjs",

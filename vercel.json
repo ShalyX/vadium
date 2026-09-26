@@ -1,0 +1,6 @@
+{
+  "name": "vadium",
+  "buildCommand": "npm run build",
+  "outputDirectory": "public",
+  "framework": null
+}

@@ -16,10 +16,10 @@ fs.mkdirSync(path.join(output, 'vendor'), { recursive: true });
 // The repository-root preview used during development serves /vendor directly.
 // Keep it in sync with the production bundle so both entry points execute.
 fs.mkdirSync(path.join(root, 'vendor'), { recursive: true });
-for (const file of ['index.html', 'deployment-config.js']) {
+for (const file of ['index.html', 'assets.html', 'deployment-config.js']) {
   fs.copyFileSync(path.join(root, file), path.join(output, file));
 }
-for (const file of ['app.js', 'coverage.js', 'style.css']) {
+for (const file of ['app.js', 'assets.js', 'assets.css', 'coverage.js', 'markets.js', 'style.css']) {
   fs.copyFileSync(path.join(root, 'src', file), path.join(output, 'src', file));
 }
 fs.copyFileSync(path.join(root, 'node_modules/ethers/dist/ethers.min.js'), path.join(output, 'vendor/ethers.min.js'));

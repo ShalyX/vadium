@@ -10,3 +10,7 @@ deployments/*.local.json
 .npm-cache/
 .playwright-cli/
 .env*
+
+# Internal workspace docs & learnings
+LEARNINGS.md
+docs/dev-day*
