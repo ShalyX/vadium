@@ -54,6 +54,8 @@ Verification for the repayment desk: `npm run check` passed 30 tests, compiled 1
 
 ## External dependencies and release blockers
 
+Hosted verification after mainnet wallet fix `2ea8bb5`: the existing Chrome wallet connected on `https://vadium.vercel.app/assets.html` and switched successfully to X Layer. The page displayed account `0xC209…4Be4`, zero NVDAx, zero TSLAx, and zero wrapper shares for both assets. Both wrappers verified on the hosted page. This verifies an actual wallet connection and mainnet balance read, superseding earlier no-wallet-only checks. No approval or asset conversion transaction was requested. The wallet still needs real collateral for a wrap/unwrap pilot.
+
 - Chainlink Data Streams access and a real signed X Layer report; the local verifier adapter has only mock-report coverage.
 - Independent onchain liquidity measurement, bounded publication, and outage monitoring. The current publisher-supplied liquidity score is insufficient for open mainnet lending.
 - A wallet-signed NVDAx or TSLAx wrapper round trip, facility terms, issuer/data usage rights, jurisdiction review, independent audit, controlled ownership, and a capped real-asset mainnet pilot.
