@@ -31,7 +31,7 @@ const ui = Object.fromEntries([
   'poolLiquidity','poolDebt','walletCollateral','walletStable','sharesValue','mintStockButton','mintStableButton',
   'riskExplanation','actionHelp','refreshButton','transactionLink',
   'environmentTitle','environmentCopy','startTitle','startCopy','startActions','quoteDescription','quoteLabel',
-  'marketDescription','walletCollateralLabel','walletStableLabel','baseLtvValue','liquidationLtvValue','mainnetProof',
+  'marketDescription','walletCollateralLabel','walletStableLabel','baseLtvValue','liquidationLtvValue','onchain-proof',
   'quoteAmount','quoteCurrent','quoteOpen','quoteClosed','quoteUnavailable','quoteNote',
   'heroCopy','coverageState','currentLtvValue','liquidationPriceValue','liquidationBufferValue','coverageRail','coverageNote',
   'collateralPrep','prepHeading','wrapperLink','rawBalanceLabel','rawBalance','wrappedBalanceLabel','wrappedBalance',
@@ -941,7 +941,7 @@ async function init(version = ++marketLoadVersion) {
     ui.startTitle.textContent = 'Use your X Layer assets';
     ui.startCopy.textContent = 'Connect your wallet, deposit supported collateral to borrow, or supply the stable asset to the pool. You need OKB for transaction fees.';
     ui.startActions.hidden = true;
-    ui.mainnetProof.hidden = true;
+    ui['onchain-proof'].hidden = true;
     ui.marketDescription.textContent = 'Isolated mainnet lending market';
     ui.collateralPrep.hidden = false;
     ui.wrapperLink.href = `${config.explorer}/address/${config.collateral}`;
@@ -1064,7 +1064,6 @@ async function init(version = ++marketLoadVersion) {
 }
 
 setPending(false);
-setView(window.location.hash.slice(1) || 'position');
 const initialMarket = new URLSearchParams(window.location.search).get('market');
-if (initialMarket === 'NVDAx' || initialMarket === 'TSLAx') void selectMarket(initialMarket);
+if (initialMarket === 'NVDAx' || initialMarket === 'TSLAx') window.location.replace(`/assets.html?asset=${initialMarket}`);
 else void init();

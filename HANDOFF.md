@@ -30,6 +30,10 @@ Use `docs/credit-quality-benchmark.md` for the borrower and lender acceptance cr
 
 Visible product copy now uses `Credit desk` and `Wrap desk` instead of `workspace`; internal workspace element and stylesheet identifiers remain unchanged. `npm run build` and `git diff --check` passed.
 
+The credit demo now has one primary Position view. Market details and Onchain proof are supporting scroll-to sections, NVDAx and TSLAx are removed from the demo market selector, and public entry points use `Try the live demo`. Browser verification confirmed the simplified sidebar, landing CTA, and `/app.html#onchain-proof` anchor. `npm run build` and `git diff --check` passed.
+
+GitHub sync preparation: completed the demo navigation cleanup, corrected its dUSD label and proof DOM reference, and made the wrap desk's demo CTA consistently open `/app.html`. Old `/app.html?market=NVDAx|TSLAx` links redirect to the selected asset in the wrap desk. Browser checks passed from the TSLAx page, including no-wallet feedback, demo navigation, the proof anchor, and the legacy TSLAx redirect. `npm run build`, both client JavaScript syntax checks, and `git diff --check` passed. The preceding full contract gate passed 28 tests. Mainnet credit remains disabled.
+
 ## Immediate next actions
 
 1. Review the dust settlement economics and define market-specific close factors, loss reserve, and liquidation policy with independent review before deployment. Continue invariant and decimal-combination testing after policy choices are explicit.

@@ -82,7 +82,7 @@ async function loadAsset() {
   ui.preview.textContent = 'Enter an amount to see the onchain wrapper estimate.';
   ui.transactionLink.hidden = true;
   const entry = ASSETS[selected];
-  ui.creditDeskLink.href = `/app.html?market=${selected}`;
+  ui.creditDeskLink.href = '/app.html';
   ui.tokenLink.href = `${EXPLORER}/address/${entry.token}`;
   ui.tokenLink.textContent = short(entry.token);
   ui.wrapperLink.href = `${EXPLORER}/address/${entry.wrapper}`;

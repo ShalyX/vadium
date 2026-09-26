@@ -15,35 +15,32 @@
     <div id="app">
       <header class="topbar">
         <a class="wordmark" href="/" aria-label="Vadium home">V<span class="brand-rule"></span>VADIUM<span class="brand-point">.</span></a>
-        <div class="topbar-context"><span class="topbar-context-label">CREDIT DESK</span><div class="network"><i></i><span id="networkLabel">X Layer</span></div></div>
+        <div class="topbar-context"><span class="topbar-context-label">LIVE DEMO</span><div class="network"><i></i><span id="networkLabel">X Layer testnet</span></div></div>
         <button id="connectButton" class="wallet-button" type="button">Connect wallet</button>
       </header>
 
       <main id="workspaceRoot" data-view="position" data-market="demo">
         <aside class="app-sidebar" aria-label="Credit desk navigation">
-          <div class="sidebar-top"><span class="sidebar-overline">CREDIT DESK / 01</span><strong>Credit desk</strong><p>Manage a position and inspect the market behind it.</p></div>
+          <div class="sidebar-top"><span class="sidebar-overline">LIVE DEMO / 01</span><strong>Credit desk</strong><p>Try a testnet position with demo AAPLx and dUSD.</p></div>
           <nav class="view-nav" aria-label="Vadium sections">
             <span class="nav-heading">NAVIGATE</span>
             <a class="view-link" href="/"><span class="nav-index">00</span><span>Overview</span><span class="nav-arrow">↗</span></a>
             <button class="view-link active" type="button" data-view-target="position" aria-current="page"><span class="nav-index">01</span><span>Position</span><span class="nav-arrow">↗</span></button>
-            <button class="view-link" type="button" data-view-target="market"><span class="nav-index">02</span><span>Market</span><span class="nav-arrow">↗</span></button>
-            <button class="view-link" type="button" data-view-target="proof"><span class="nav-index">03</span><span>Onchain proof</span><span class="nav-arrow">↗</span></button>
           </nav>
           <nav class="view-nav market-nav" aria-label="Collateral markets">
-            <span class="nav-heading">COLLATERAL</span>
+            <span class="nav-heading">DEMO MARKET</span>
             <button class="view-link market-link active" type="button" data-market="demo" aria-pressed="true"><span class="nav-index">A</span><span>Demo AAPLx</span><span class="nav-arrow">↗</span></button>
-            <button class="view-link market-link" type="button" data-market="NVDAx" aria-pressed="false"><span class="nav-index">N</span><span>NVDAx</span><span class="nav-arrow">↗</span></button>
-            <button class="view-link market-link" type="button" data-market="TSLAx" aria-pressed="false"><span class="nav-index">T</span><span>TSLAx</span><span class="nav-arrow">↗</span></button>
-            <a class="view-link asset-route" href="/assets.html"><span class="nav-index">04</span><span>Wrap desk</span><span class="nav-arrow">↗</span></a>
+            <a class="view-link asset-route" href="/assets.html"><span class="nav-index">02</span><span>Wrap desk</span><span class="nav-arrow">↗</span></a>
           </nav>
           <div class="sidebar-foot"><div class="sidebar-foot-test"><span class="sidebar-overline">ENVIRONMENT</span><strong>Demo market</strong><p>Testnet tokens have no real-world value. Mainnet USDG proof is shown separately.</p><span class="sidebar-chain">XL / 1952</span></div><div class="sidebar-foot-asset"><span class="sidebar-overline">ENVIRONMENT</span><strong>X Layer mainnet</strong><p>Issuer tokens and V2 wrappers. No Vadium credit facility is open for these assets.</p><span class="sidebar-chain">XL / 196</span></div><div class="sidebar-foot-proof"><span class="sidebar-overline">EVIDENCE NETWORK</span><strong>X Layer mainnet</strong><p>Historic transactions from the experimental USDG proof pool.</p><span class="sidebar-chain">XL / 196</span></div></div>
         </aside>
         <div class="workspace-content">
         <section class="hero">
-          <div class="hero-heading"><p class="eyebrow">VADIUM / X LAYER</p><h1 class="view-title" data-title="position">Your credit desk</h1><h1 class="view-title" data-title="market">Market details</h1><h1 class="view-title" data-title="proof">Onchain proof</h1></div>
+          <div class="hero-heading"><p class="eyebrow">VADIUM / X LAYER TESTNET</p><h1 class="view-title" data-title="position">Live credit demo</h1><h1 class="view-title" data-title="market">Market details</h1><h1 class="view-title" data-title="proof">Onchain proof</h1></div>
           <p id="heroCopy" class="hero-copy">Track collateral, available credit and repayment from one position.</p>
           <p class="view-description" data-description="market">Compare borrowing limits and inspect the latest onchain risk state for this demo market.</p>
           <p class="view-description" data-description="proof">The transactions behind the mainnet USDG proof, with its demo collateral clearly marked.</p>
+          <nav class="supporting-links" aria-label="Supporting information"><a href="#market-details">Market details <span aria-hidden="true">↓</span></a><a href="#onchain-proof">Onchain proof <span aria-hidden="true">↓</span></a></nav>
         </section>
 
         <section id="environmentNotice" class="demo-notice" aria-label="Market environment">
@@ -78,7 +75,7 @@
           <p id="prepMessage" class="prep-message" role="status" aria-live="polite"></p><a id="prepTransactionLink" class="transaction-link" href="#" target="_blank" rel="noreferrer" hidden>View transaction on X Layer ↗</a>
         </section>
 
-        <section class="quote-panel" aria-label="Borrowing power preview">
+        <section id="market-details" class="quote-panel" aria-label="Market details and borrowing power preview">
           <div class="quote-intro"><span class="section-label">BEFORE YOU DEPOSIT</span><h2>Check your borrowing power</h2><p id="quoteDescription">Enter an AAPLx amount to see how the same collateral is treated while the reference market is open, closed, or unavailable. This uses the latest onchain price and pool settings.</p></div>
           <label class="quote-field"><span id="quoteLabel">Demo AAPLx amount</span><input id="quoteAmount" inputmode="decimal" value="1" aria-label="Collateral amount" /></label>
           <div class="quote-results"><div><span>Current limit</span><strong id="quoteCurrent">—</strong></div><div><span>If market is open</span><strong id="quoteOpen">—</strong></div><div><span>If market is closed</span><strong id="quoteClosed">—</strong></div><div><span>If data is unavailable</span><strong id="quoteUnavailable">0 dUSD</strong></div></div>
@@ -158,7 +155,7 @@
           <div><span>LIQUIDATION LTV</span><strong id="liquidationLtvValue">—</strong></div>
         </section>
 
-        <section id="mainnetProof" class="mainnet-proof" aria-label="Real USDG transaction proof">
+        <section id="onchain-proof" class="mainnet-proof" aria-label="Real USDG transaction proof">
           <div class="proof-head"><div><span class="section-label">X LAYER MAINNET / TRANSACTION RECORD</span><h2>Real USDG, documented end to end.</h2><p>The experimental pool supplied 0.01 USDG, borrowed 0.005 USDG, repaid while new borrowing was paused, and withdrew the full supply.</p></div><div class="proof-amount"><span>BORROWED</span><strong>0.005</strong><small>USDG</small></div></div>
           <div class="proof-warning"><strong>Demo collateral</strong><span>Anyone can mint the collateral in this proof pool. It is transaction evidence only. Do not supply real funds to this pool.</span></div>
           <div class="proof-timeline"><div><span>01</span><strong>Borrow USDG</strong><p>Credit drawn against demo AAPLx collateral.</p><a href="https://www.okx.com/web3/explorer/xlayer/tx/0xa882397229c4ab8557a77f77bba2d790dec51184a3a8254469bc706f45d6d585" target="_blank" rel="noreferrer">View transaction ↗</a></div><div><span>02</span><strong>Risk unavailable</strong><p>New borrowing was paused by a market risk update.</p><a href="https://www.okx.com/web3/explorer/xlayer/tx/0x108a9fe8932224d874ba22a24d2410d8e5fc335ff7dc0aafd4b2dc90b53b77e5" target="_blank" rel="noreferrer">View transaction ↗</a></div><div><span>03</span><strong>Repay during pause</strong><p>The borrower repaid while new credit was disabled.</p><a href="https://www.okx.com/web3/explorer/xlayer/tx/0x218343687fdcb833a85d395b39a5b351da8de66b31d4a58cfd52d3c71272194b" target="_blank" rel="noreferrer">View transaction ↗</a></div></div>
@@ -171,6 +168,5 @@
     </div>
     <script src="/deployment-config.js"></script>
     <script type="module" src="/src/app.js"></script>
-    <script>window.addEventListener('load', () => { if (location.hash === '#proof') document.querySelector('[data-view-target="proof"]')?.click(); });</script>
   </body>
 </html>

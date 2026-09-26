@@ -176,7 +176,6 @@ footer { width: min(1180px, calc(100% - 48px)); margin: 45px auto 28px; display:
 .view-link { border: 0; border-bottom: 3px solid transparent; background: transparent; color: #627879; padding: 13px 2px 14px; font-size: 13px; font-weight: 600; }
 .view-link.active { border-bottom-color: #08776e; color: #0f4645; }
 .asset-route { display: flex; align-items: center; text-decoration: none; }
-main[data-view="position"] .quote-panel, main[data-view="position"] .mainnet-proof { display: none; }
 main[data-view="market"] .terminal, main[data-view="market"] .proof-strip, main[data-view="market"] .collateral-prep, main[data-view="market"] .start-panel { display: none; }
 :root { color-scheme: light; --ink: #14252c; --muted: #627077; --line: #d8dedb; --panel: #ffffff; --panel-2: #f2f5f2; --acid: #08776e; --orange: #b34f39; background: #edf1ed; font-family: Manrope, sans-serif; }
 body { background: #edf1ed; color: var(--ink); }
@@ -336,6 +335,9 @@ main[data-view="position"] .view-title[data-title="position"], main[data-view="m
 .view-description { display: none; margin: 0 0 2px; max-width: 320px; color: #627976; font-size: 12px; line-height: 1.55; }
 main[data-view="market"] .hero-copy, main[data-view="proof"] .hero-copy { display: none; }
 main[data-view="market"] .view-description[data-description="market"], main[data-view="proof"] .view-description[data-description="proof"] { display: block; }
+.supporting-links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+.supporting-links a { padding: 9px 11px; border: 1px solid #c5d7ce; border-radius: 4px; color: #176b62; font: 10px DM Mono, monospace; text-decoration: none; }
+.supporting-links a:hover { background: #edf5ee; }
 .demo-notice { order: 1; margin: 20px 0 0; padding: 12px 16px; border-radius: 7px 7px 0 0; border-color: #e4d8bb; background: #faf4e8; }
 .demo-notice strong { color: #875b36; }
 .connection-status { order: 2; margin-bottom: 20px; border-radius: 0 0 7px 7px; padding: 10px 16px; min-height: 37px; }
@@ -396,7 +398,6 @@ main[data-view="market"] .view-description[data-description="market"], main[data
 .proof-timeline a { margin-top: auto; color: var(--accent); font: 10px DM Mono, monospace; text-decoration: none; }
 .proof-links { border-top: 1px solid #dce5de; padding-top: 18px; }
 .proof-links a { background: #f2f7f0; }
-main[data-view="position"] .quote-panel, main[data-view="position"] .mainnet-proof { display: none; }
 main[data-view="market"] .start-panel, main[data-view="market"] .collateral-prep, main[data-view="market"] .mainnet-proof { display: none; }
 main[data-view="market"] .quote-panel { order: 3; margin-bottom: 16px; }
 main[data-view="market"] .terminal { display: block; order: 4; }
