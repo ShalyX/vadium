@@ -6,7 +6,7 @@ import {MockERC20} from "./MockERC20.sol";
 /// @dev Test-only wrapper with a fixed exchange rate. It is not a production vault.
 contract MockWrapper is MockERC20 {
     address public immutable asset;
-    uint256 public immutable assetsPerShare;
+    uint256 public assetsPerShare;
 
     constructor(address asset_, uint256 assetsPerShare_)
         MockERC20("Wrapped test equity", "wAAPLx", 18)
@@ -22,6 +22,12 @@ contract MockWrapper is MockERC20 {
 
     function convertToShares(uint256 assets) external view returns (uint256) {
         return assets * 1e18 / assetsPerShare;
+    }
+
+    /// @dev Test-only exchange-rate change, including adverse rebases.
+    function setAssetsPerShare(uint256 nextAssetsPerShare) external {
+        require(nextAssetsPerShare != 0);
+        assetsPerShare = nextAssetsPerShare;
     }
 
     function previewDeposit(uint256 assets) public view returns (uint256) {

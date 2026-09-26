@@ -29,14 +29,14 @@ The product promise is **access USDG while retaining the tokenized position, sub
 
 ## Current code against the benchmark
 
-| Capability | State on 25 September 2026 |
+| Capability | State on 26 September 2026 |
 | --- | --- |
 | Deposit wrapped xStock and draw/repay USDG | Contract path implemented locally; real NVDAx/TSLAx facilities not deployed. |
 | Revolving use of repaid capacity | Supported by the principal-only pool when the oracle and cash permit. |
 | Borrower coverage and liquidation price | Added to the browser; calculated from the current usable onchain price and wrapper conversion. |
 | Accrued interest and lender return | Implemented in a new local-only facility candidate; one-year accrual and lender redemption tests pass. No deployment or independent review. |
 | Maintenance call, alerting, and cure workflow | Warning view added; formal call policy and monitored alerts missing. |
-| Bad-debt treatment and constrained liquidation | Local candidate writes off debt after collateral exhaustion and passes a lender-loss test; loss policy, bounds, and adversarial review remain open. |
+| Bad-debt treatment and constrained liquidation | Local candidate writes off debt after collateral exhaustion. Tests now cover repeat liquidation, collateral bounds, and lender redemption after a loss. Close-factor and dust policies, deeper invariants, and independent review remain open. |
 | Real signed oracle operations and audited mainnet launch | Missing. |
 
 ## Next implementation order

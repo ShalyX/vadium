@@ -113,6 +113,81 @@ test('Credit facility supports partial repayment and a second draw', async () =>
   assert.ok(afterRedraw >= E(900) && afterRedraw < E(901));
 });
 
+test('Credit facility bounds partial repayment rounding and closes all debt after interest', async () => {
+  const f = await creditFixture();
+  const borrower = await f.borrower.getAddress();
+  await (await f.facility.connect(f.borrower).borrow(E(1_000), { gasLimit: 1_000_000 })).wait();
+  await f.provider.send('evm_increaseTime', [365 * 24 * 3600]);
+  await f.provider.send('evm_mine', []);
+  await (await f.stable.mint(borrower, E(200))).wait();
+  await (await f.stable.connect(f.borrower).approve(await f.facility.getAddress(), E(1_200))).wait();
+  const offered = E(399);
+  const paid = await f.facility.connect(f.borrower).repay.staticCall(offered);
+  assert.ok(paid > 0n && paid <= offered);
+  const debtBefore = await f.facility.debtOf(borrower);
+  await (await f.facility.connect(f.borrower).repay(offered, { gasLimit: 1_000_000 })).wait();
+  const debtAfter = await f.facility.debtOf(borrower);
+  assert.ok(debtAfter < debtBefore && debtBefore - debtAfter <= offered + 2n);
+  await (await f.facility.connect(f.borrower).repay(E(1_200), { gasLimit: 1_000_000 })).wait();
+  assert.equal(await f.facility.debtOf(borrower), 0n);
+  assert.equal(await f.facility.totalDebtShares(), 0n);
+  assert.equal(await f.facility.totalDebt(), 0n);
+});
+
+test('Credit facility bounds repeat liquidation and passes exhausted-collateral loss to lenders', async () => {
+  const f = await creditFixture();
+  const borrower = await f.borrower.getAddress();
+  await (await f.facility.connect(f.borrower).borrow(E(1_300), { gasLimit: 1_000_000 })).wait();
+  await (await f.oracle.connect(f.publisher).publish(await f.stock.getAddress(), {
+    price: E(100), freshnessBps: 10_000, liquidityBps: 10_000, asOf: f.now + 1, state: 0,
+    inputsHash: ethers.keccak256(ethers.toUtf8Bytes('repeat-liquidation')),
+  })).wait();
+  await (await f.stable.connect(f.liquidator).approve(await f.facility.getAddress(), E(1_300))).wait();
+  const first = await f.facility.connect(f.liquidator).liquidate.staticCall(borrower, E(300));
+  assert.ok(first[0] > 0n && first[0] <= E(300));
+  assert.ok(first[1] > 0n && first[1] <= E(10));
+  await (await f.facility.connect(f.liquidator).liquidate(borrower, E(300), { gasLimit: 1_000_000 })).wait();
+  const remaining = await f.facility.collateralOf(borrower);
+  assert.equal(remaining, E(10) - first[1]);
+  const second = await f.facility.connect(f.liquidator).liquidate.staticCall(borrower, E(1_300));
+  assert.ok(second[0] > 0n && second[0] < E(1_000));
+  assert.equal(second[1], remaining);
+  await (await f.facility.connect(f.liquidator).liquidate(borrower, E(1_300), { gasLimit: 1_000_000 })).wait();
+  assert.equal(await f.facility.collateralOf(borrower), 0n);
+  assert.equal(await f.facility.debtOf(borrower), 0n);
+  await assert.rejects(f.facility.connect(f.liquidator).liquidate.staticCall(borrower, E(1)));
+  const lenderShares = await f.facility.liquidityShares(await f.lender.getAddress());
+  const lenderBefore = await f.stable.balanceOf(await f.lender.getAddress());
+  await (await f.facility.connect(f.lender).withdrawLiquidity(lenderShares, { gasLimit: 1_000_000 })).wait();
+  const recovered = (await f.stable.balanceOf(await f.lender.getAddress())) - lenderBefore;
+  assert.ok(recovered < E(20_000));
+  assert.equal(await f.facility.totalLiquidityShares(), 0n);
+});
+
+test('Credit facility revalues wrapper shares when underlying per share changes', async () => {
+  const f = await fixture();
+  const borrower = await f.borrower.getAddress();
+  const wrapper = await deploy('MockWrapper', 'MockWrapper.sol', f.owner, [await f.stock.getAddress(), E(1.2)]);
+  const facility = await deploy('VadiumCreditPool', 'VadiumCreditPool.sol', f.owner, [
+    await f.stable.getAddress(), await wrapper.getAddress(), await f.oracle.getAddress(),
+    await f.stock.getAddress(), 6_500, 8_000, 7_500, 5_000, 3_000, 500, 1_000, E(1_000_000),
+  ]);
+  await (await wrapper.mint(borrower, E(10))).wait();
+  await (await wrapper.connect(f.borrower).approve(await facility.getAddress(), E(10))).wait();
+  await (await f.stable.connect(f.lender).approve(await facility.getAddress(), E(20_000))).wait();
+  await (await facility.connect(f.lender).supply(E(20_000), { gasLimit: 1_000_000 })).wait();
+  await (await f.oracle.connect(f.publisher).publish(await wrapper.getAddress(), {
+    price: E(200), freshnessBps: 10_000, liquidityBps: 10_000, asOf: f.now, state: 0,
+    inputsHash: ethers.keccak256(ethers.toUtf8Bytes('wrapper-rate')),
+  })).wait();
+  await (await facility.connect(f.borrower).depositCollateral(E(10))).wait();
+  assert.equal(await facility.borrowCapacity(borrower), E(1_560));
+  await (await facility.connect(f.borrower).borrow(E(1_000), { gasLimit: 1_000_000 })).wait();
+  await (await wrapper.setAssetsPerShare(E(0.5))).wait();
+  assert.equal(await facility.borrowCapacity(borrower), E(650));
+  assert.equal(await facility.isLiquidatable(borrower), true);
+});
+
 async function deploy(name, file, signer, args = []) {
   const a = artifact(file, name);
   const contract = await new ethers.ContractFactory(a.abi, a.evm.bytecode.object, signer).deploy(...args);
