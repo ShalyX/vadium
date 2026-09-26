@@ -19,7 +19,7 @@ fs.mkdirSync(path.join(root, 'vendor'), { recursive: true });
 for (const file of ['index.html', 'app.html', 'assets.html', 'deployment-config.js']) {
   fs.copyFileSync(path.join(root, file), path.join(output, file));
 }
-for (const file of ['app.js', 'assets.js', 'assets.css', 'coverage.js', 'repayment.js', 'landing.css', 'markets.js', 'style.css']) {
+for (const file of ['app.js', 'assets.js', 'assets.css', 'coverage.js', 'repayment.js', 'wallet.js', 'landing.css', 'markets.js', 'style.css']) {
   fs.copyFileSync(path.join(root, 'src', file), path.join(output, 'src', file));
 }
 fs.copyFileSync(path.join(root, 'node_modules/ethers/dist/ethers.min.js'), path.join(output, 'vendor/ethers.min.js'));

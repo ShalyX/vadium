@@ -1,5 +1,6 @@
 import { BrowserProvider, Contract, JsonRpcProvider, formatUnits, parseUnits } from '../vendor/ethers.min.js';
 import { MARKETS, XLAYER } from './markets.js';
+import { injectedWallet, switchWalletNetwork, assertWalletSession, watchWallet } from './wallet.js';
 
 const ASSETS = MARKETS;
 const EXPLORER = XLAYER.explorer;
@@ -25,6 +26,10 @@ let maxDeposit = 0n;
 let maxRedeem = 0n;
 let verified = false;
 let pending = false;
+let connecting = false;
+let activeWallet;
+let stopWatchingWallet;
+let previewValid = false;
 let loadVersion = 0;
 let previewVersion = 0;
 
@@ -40,9 +45,10 @@ function status(message, isError = false) {
 
 function updateAction() {
   ui.actionButton.textContent = pending ? 'Waiting for confirmation…' : !account ? 'Connect wallet to continue' : mode === 'wrap' ? `Wrap ${selected}` : `Unwrap ${selected}`;
-  ui.actionButton.disabled = pending || !account || !verified || !/^\d+(\.\d+)?$/.test(ui.amountInput.value.trim());
+  ui.actionButton.disabled = pending || connecting || (!!account && (!verified || !previewValid));
   ui.maxButton.disabled = pending || !account || !verified;
-  ui.connectButton.disabled = pending;
+  ui.connectButton.disabled = pending || connecting;
+  ui.amountInput.readOnly = pending;
 }
 
 async function probe(url) {
@@ -69,6 +75,7 @@ async function loadAsset() {
   const version = ++loadVersion;
   ++previewVersion;
   verified = false;
+  previewValid = false;
   rawToken = undefined;
   wrappedToken = undefined;
   ui.assetTitle.innerHTML = `${selected} <span>→</span> wrapped ${selected}`;
@@ -141,47 +148,62 @@ async function refreshBalances(version = loadVersion) {
   ui.shareBalance.textContent = `${quantity(shares, shareDecimals)} shares`;
 }
 
-async function ensureNetwork() {
-  const wallet = window.ethereum;
-  try { await wallet.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0xc4' }] }); }
-  catch (error) {
-    if (error?.code !== 4902 && !/unrecognized chain|unknown chain|chain.*not added|chain.*does not exist/i.test(error?.message || '')) throw error;
-    await wallet.request({ method: 'wallet_addEthereumChain', params: [{ chainId: '0xc4', chainName: 'X Layer', nativeCurrency: { name: 'OKB', symbol: 'OKB', decimals: 18 }, rpcUrls: [MAINNET_RPC], blockExplorerUrls: [EXPLORER] }] });
-  }
-}
-
 async function connect() {
-  if (!window.ethereum) return status('No EVM wallet detected. Open this page in a browser with OKX Wallet or another EVM wallet.', true);
+  if (connecting || pending) return;
+  const wallet = injectedWallet(window);
+  if (!wallet) return status('No EVM wallet detected. Open this page in a browser with OKX Wallet or another EVM wallet.', true);
   try {
-    ui.connectButton.disabled = true;
-    await ensureNetwork();
-    walletProvider = new BrowserProvider(window.ethereum);
+    connecting = true;
+    updateAction();
+    stopWatchingWallet?.();
+    await wallet.request({ method: 'eth_requestAccounts' });
+    await switchWalletNetwork(wallet, XLAYER);
+    walletProvider = new BrowserProvider(wallet);
     signer = await walletProvider.getSigner();
     account = await signer.getAddress();
+    activeWallet = wallet;
+    await assertWalletSession(wallet, account, 196);
+    stopWatchingWallet = watchWallet(wallet, () => window.location.reload());
     ui.connectButton.textContent = short(account);
     status('Wallet connected. Reading your token balances…');
     await refreshBalances();
     status('Wallet connected. Review the onchain estimate before converting.');
+    await preview();
     updateAction();
-  } catch (error) { status(errorText(error), true); }
-  finally { ui.connectButton.disabled = false; }
+  } catch (error) {
+    account = undefined;
+    signer = undefined;
+    activeWallet = undefined;
+    ui.connectButton.textContent = 'Connect wallet';
+    ui.rawBalance.textContent = 'Connect wallet';
+    ui.shareBalance.textContent = 'Connect wallet';
+    status(errorText(error), true);
+  }
+  finally { connecting = false; updateAction(); }
 }
 
 async function preview() {
   const version = ++previewVersion;
+  previewValid = false;
   updateAction();
   if (!verified || !ui.amountInput.value.trim()) return void (ui.preview.textContent = 'Enter an amount to see the onchain wrapper estimate.');
   let amount;
   try { amount = parseUnits(ui.amountInput.value.trim(), mode === 'wrap' ? rawDecimals : shareDecimals); }
   catch { return void (ui.preview.textContent = 'Enter a valid token amount.'); }
   if (amount <= 0n) return void (ui.preview.textContent = 'Enter an amount greater than zero.');
+  ui.preview.textContent = 'Reading the current wrapper estimate…';
   try {
     const result = mode === 'wrap' ? await wrappedToken.previewDeposit(amount) : await wrappedToken.previewRedeem(amount);
     if (version !== previewVersion) return;
+    if (result <= 0n) throw new Error('This amount rounds to zero. Enter a larger amount.');
+    const available = mode === 'wrap' ? (rawBalance < maxDeposit ? rawBalance : maxDeposit) : (shareBalance < maxRedeem ? shareBalance : maxRedeem);
+    if (account && amount > available) throw new Error('Amount exceeds your wallet balance or the wrapper limit.');
+    previewValid = true;
     ui.preview.textContent = mode === 'wrap'
       ? `Estimated receipt: ${quantity(result, shareDecimals)} wrapped shares.`
       : `Estimated receipt: ${quantity(result, rawDecimals)} ${selected}.`;
   } catch (error) { if (version === previewVersion) ui.preview.textContent = `Preview unavailable: ${errorText(error)}`; }
+  finally { if (version === previewVersion) updateAction(); }
 }
 
 async function execute() {
@@ -194,7 +216,8 @@ async function execute() {
     pending = true;
     updateAction();
     ui.transactionLink.hidden = true;
-    if ((await signer.getAddress()).toLowerCase() !== account.toLowerCase() || Number((await walletProvider.getNetwork()).chainId) !== 196) throw new Error('Wallet account or network changed. Reconnect before continuing.');
+    await assertWalletSession(activeWallet, account, 196);
+    if (await walletProvider.getBalance(account) === 0n) throw new Error('You need OKB on X Layer mainnet to pay transaction fees.');
     await refreshBalances();
     const available = mode === 'wrap' ? (rawBalance < maxDeposit ? rawBalance : maxDeposit) : (shareBalance < maxRedeem ? shareBalance : maxRedeem);
     if (amount > available) throw new Error('Amount exceeds your wallet balance or the wrapper limit.');
@@ -202,13 +225,14 @@ async function execute() {
     if (mode === 'wrap') {
       const allowance = await rawToken.allowance(account, wrapperAddress);
       if (allowance < amount) {
-        status(`Approve exactly ${quantity(amount, rawDecimals)} ${selected} in your wallet…`);
+        status(`Approve exactly ${formatUnits(amount, rawDecimals)} ${selected} in your wallet…`);
         const approval = await rawToken.connect(signer).approve(wrapperAddress, amount);
         ui.transactionLink.href = `${EXPLORER}/tx/${approval.hash}`;
         ui.transactionLink.hidden = false;
         if ((await approval.wait())?.status !== 1) throw new Error('Token approval did not confirm.');
       }
     }
+    await assertWalletSession(activeWallet, account, 196);
     const writeWrapper = wrappedToken.connect(signer);
     const estimated = mode === 'wrap' ? await writeWrapper.deposit.staticCall(amount, account) : await writeWrapper.redeem.staticCall(amount, account, account);
     if (estimated <= 0n) throw new Error('Wrapper conversion rounds to zero.');
@@ -260,9 +284,7 @@ ui.maxButton.addEventListener('click', () => {
   void preview();
 });
 ui.connectButton.addEventListener('click', () => { void connect(); });
-ui.actionButton.addEventListener('click', () => { void execute(); });
-window.ethereum?.on?.('accountsChanged', () => window.location.reload());
-window.ethereum?.on?.('chainChanged', () => window.location.reload());
+ui.actionButton.addEventListener('click', () => { if (account) void execute(); else void connect(); });
 document.querySelectorAll('[data-asset]').forEach((item) => {
   const active = item.dataset.asset === selected;
   item.classList.toggle('selected', active);

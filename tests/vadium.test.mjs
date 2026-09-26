@@ -8,6 +8,7 @@ import ganache from 'ganache';
 import solc from 'solc';
 import { calculateCoverage } from '../src/coverage.js';
 import { repaymentPlan } from '../src/repayment.js';
+import { injectedWallet, switchWalletNetwork, assertWalletSession } from '../src/wallet.js';
 import { INTEGRATION_TERMS, MARKETS, XLAYER } from '../src/markets.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -33,6 +34,49 @@ function compile() {
 const contracts = compile();
 const artifact = (file, name) => contracts[file][name];
 const E = (value) => ethers.parseUnits(String(value), 18);
+
+test('wallet detection supports OKX-only injection and falls back to a standard EVM wallet', () => {
+  const okx = { request() {} };
+  const standard = { request() {} };
+  assert.equal(injectedWallet({ okxwallet: okx }), okx);
+  assert.equal(injectedWallet({ okxwallet: okx, ethereum: standard }), okx);
+  assert.equal(injectedWallet({ okxwallet: {}, ethereum: standard }), standard);
+  assert.equal(injectedWallet({}), undefined);
+});
+
+test('wallet adds an unknown X Layer network then explicitly switches and verifies it', async () => {
+  let chain = '0x1';
+  let added = false;
+  const calls = [];
+  const wallet = { async request({ method, params }) {
+    calls.push(method);
+    if (method === 'eth_chainId') return chain;
+    if (method === 'wallet_addEthereumChain') {
+      assert.equal(params[0].chainId, '0xc4');
+      added = true;
+    }
+    if (method === 'wallet_switchEthereumChain') {
+      if (!added) throw { data: { originalError: { code: 4902 } } };
+      chain = params[0].chainId;
+    }
+  } };
+  await switchWalletNetwork(wallet, XLAYER);
+  assert.deepEqual(calls, ['eth_chainId', 'wallet_switchEthereumChain', 'wallet_addEthereumChain', 'wallet_switchEthereumChain', 'eth_chainId']);
+});
+
+test('wallet fails closed on rejected or ineffective switches and changed signing accounts', async () => {
+  const rejected = { async request({ method }) {
+    if (method === 'eth_chainId') return '0x1';
+    throw { code: 4001 };
+  } };
+  await assert.rejects(switchWalletNetwork(rejected, XLAYER), (error) => error.code === 4001);
+  const ineffective = { async request({ method }) { if (method === 'eth_chainId') return '0x1'; } };
+  await assert.rejects(switchWalletNetwork(ineffective, XLAYER), /did not switch/);
+  const wallet = { async request({ method }) { return method === 'eth_accounts' ? ['0xABC'] : '0xc4'; } };
+  await assertWalletSession(wallet, '0xabc', 196);
+  await assert.rejects(assertWalletSession(wallet, '0xdef', 196), /changed/);
+  await assert.rejects(assertWalletSession(wallet, '0xabc', 1952), /changed/);
+});
 
 test('repayment review preserves atomic debt and distinguishes partial payment from wallet shortfall', () => {
   const partial = repaymentPlan(1_000_000_001n, 400_000_000n, 400_000_000n);

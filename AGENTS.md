@@ -19,6 +19,7 @@ Read `HANDOFF.md`, `docs/credit-quality-benchmark.md`, and `docs/mainnet-release
 
 ## Workflow
 
+- Current priority: make the real-asset mainnet flow usable before adding more product features. Work on wallet signing, a verified live oracle, the reviewed facility deployment, funded liquidity, and the complete wrap-to-repay pilot. Testnet remains internal validation.
 - Make changes on the `codex/mainnet-hardening` branch unless the user requests another branch.
 - Update `HANDOFF.md` after material decisions or code changes, including tests run and remaining blockers.
 - Keep the README and UI claims aligned with deployed reality. State clearly when a feature is local-only, testnet-only, or live on mainnet.
