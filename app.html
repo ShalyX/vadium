@@ -116,6 +116,14 @@
                 <div class="tab-group"><span>AS LENDER</span><div><button class="tab" data-action="supply">Supply</button><button class="tab" data-action="redeem">Redeem</button></div></div>
               </div>
               <p id="actionHelp" class="action-help">Lock demo AAPLx as collateral. This does not create debt.</p>
+              <section id="repaymentPanel" class="repayment-panel" aria-label="Repayment review" hidden>
+                <div><span>Debt to repay</span><strong id="repaymentDebt">—</strong></div>
+                <div><span>Wallet balance</span><strong id="repaymentBalance">—</strong></div>
+                <div><span>Debt after payment</span><strong id="repaymentRemaining">—</strong></div>
+                <p id="repaymentNote" aria-live="polite">Connect your wallet to review repayment.</p>
+                <button id="repayFullButton" type="button" disabled>Repay in full</button>
+                <button id="withdrawRepaidButton" type="button" hidden>Withdraw remaining collateral ↗</button>
+              </section>
               <label class="amount-field">
                 <span id="amountLabel">AAPLx amount</span>
                 <input id="amountInput" inputmode="decimal" placeholder="0.00" autocomplete="off" />

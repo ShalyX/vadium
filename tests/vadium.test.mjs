@@ -7,6 +7,7 @@ import { ethers } from 'ethers';
 import ganache from 'ganache';
 import solc from 'solc';
 import { calculateCoverage } from '../src/coverage.js';
+import { repaymentPlan } from '../src/repayment.js';
 import { INTEGRATION_TERMS, MARKETS, XLAYER } from '../src/markets.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -32,6 +33,28 @@ function compile() {
 const contracts = compile();
 const artifact = (file, name) => contracts[file][name];
 const E = (value) => ethers.parseUnits(String(value), 18);
+
+test('repayment review preserves atomic debt and distinguishes partial payment from wallet shortfall', () => {
+  const partial = repaymentPlan(1_000_000_001n, 400_000_000n, 400_000_000n);
+  assert.equal(partial.payment, 400_000_000n);
+  assert.equal(partial.remaining, 600_000_001n);
+  assert.equal(partial.shortfall, 600_000_001n);
+  assert.equal(partial.canRepayFull, false);
+  assert.equal(partial.valid, true);
+  const full = repaymentPlan(E(1) + 1n, E(2), E(2));
+  assert.equal(full.payment, E(1) + 1n);
+  assert.equal(full.remaining, 0n);
+  assert.equal(full.canRepayFull, true);
+  assert.equal(full.valid, true);
+});
+
+test('repayment review rejects empty, unfunded, and invalid amounts', () => {
+  assert.equal(repaymentPlan(0n, E(1), E(1)).valid, false);
+  assert.equal(repaymentPlan(E(1), E(1), 0n).valid, false);
+  assert.equal(repaymentPlan(E(1), 0n, E(1)).valid, false);
+  assert.throws(() => repaymentPlan(-1n, 0n, 0n), RangeError);
+  assert.throws(() => repaymentPlan(1, 0n, 0n), RangeError);
+});
 
 test('coverage shows the correct cushion and price for a six-decimal USDG loan', () => {
   const position = calculateCoverage({

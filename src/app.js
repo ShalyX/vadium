@@ -1,5 +1,6 @@
 import { BrowserProvider, Contract, JsonRpcProvider, formatUnits, parseUnits } from '../vendor/ethers.min.js';
 import { calculateCoverage } from './coverage.js';
+import { repaymentPlan } from './repayment.js';
 import { MARKETS, XLAYER } from './markets.js';
 
 const config = window.VADIUM_CONFIG;
@@ -38,6 +39,7 @@ const ui = Object.fromEntries([
   'wrapAmount','wrapMax','wrapPreview','wrapButton','unwrapAmount','unwrapMax','unwrapPreview','unwrapButton',
   'prepMessage','prepTransactionLink','connectionStatus','workspaceRoot','facilityNotice','facilityTitle','facilityCopy',
   'issuerTokenLink','facilityWrapperLink','facilityStableLink','assetIcon',
+  'repaymentPanel','repaymentDebt','repaymentBalance','repaymentRemaining','repaymentNote','repayFullButton','withdrawRepaidButton',
 ].map((id) => [id, $(id)]));
 
 let provider;
@@ -60,6 +62,7 @@ let stableSymbol = 'dUSD';
 let collateralSymbol = 'AAPLx';
 let underlyingSymbol = 'AAPLx';
 let selectedAction = 'deposit';
+let repayFull = false;
 let snapshot = {};
 let pending = false;
 let riskAvailable = false;
@@ -158,6 +161,7 @@ function setPending(value, label = '') {
   pending = value;
   ui.actionButton.disabled = value || !account || !marketReady || !writeEnabled()
     || (selectedAction === 'borrow' && (!riskAvailable || multiplier === 0n || operatorBorrowPaused))
+    || (selectedAction === 'repay' && (!(snapshot.debt > 0n) || !(snapshot.stableBalance > 0n)))
     || (selectedAction === 'supply' && operatorSupplyPaused);
   ui.actionButton.textContent = value ? label : isAssetDesk() && !writeEnabled() ? 'Facility not deployed'
     : !writeEnabled() && activeNetwork().chainId === 196 ? 'Read-only deployment'
@@ -171,6 +175,32 @@ function setPending(value, label = '') {
   ui.maxButton.disabled = value || !account || !marketReady || !writeEnabled();
   ui.refreshButton.disabled = value || refreshing || !pool;
   document.querySelectorAll('.tab').forEach((tab) => { tab.disabled = value; });
+  ui.amountInput.readOnly = value || (selectedAction === 'repay' && repayFull);
+  renderRepayment();
+}
+
+function renderRepayment() {
+  ui.repaymentPanel.hidden = selectedAction !== 'repay';
+  if (selectedAction !== 'repay') return;
+  const ready = account && marketReady && snapshot.debt !== undefined && snapshot.stableBalance !== undefined;
+  let requested = 0n;
+  try { requested = parseUnits(ui.amountInput.value.trim() || '0', stableDecimals); } catch { /* Input is validated on submit. */ }
+  if (requested < 0n) requested = 0n;
+  const plan = repaymentPlan(snapshot.debt ?? 0n, snapshot.stableBalance ?? 0n, requested);
+  ui.actionButton.disabled = pending || !ready || !writeEnabled() || !plan.valid;
+  const exact = (value) => `${formatUnits(value, stableDecimals)} ${stableSymbol}`;
+  ui.repaymentDebt.textContent = ready ? exact(snapshot.debt) : '—';
+  ui.repaymentBalance.textContent = ready ? exact(snapshot.stableBalance) : '—';
+  ui.repaymentRemaining.textContent = ready ? exact(plan.remaining) : '—';
+  ui.repayFullButton.disabled = pending || !ready || !writeEnabled() || (!repayFull && !plan.canRepayFull);
+  ui.repayFullButton.textContent = repayFull ? 'Enter a partial amount' : 'Repay in full';
+  ui.withdrawRepaidButton.hidden = !ready || snapshot.debt !== 0n || !(snapshot.collateralAmount > 0n);
+  ui.withdrawRepaidButton.disabled = pending || !writeEnabled();
+  ui.repaymentNote.textContent = !ready ? 'Connect your wallet and load your position to review repayment.'
+    : snapshot.debt === 0n ? 'No debt remains. Deposited collateral can be withdrawn in a separate transaction.'
+    : plan.shortfall > 0n ? `You need ${exact(plan.shortfall)} more to repay in full. You can make a partial repayment now.`
+    : repayFull ? 'Repay the entire displayed debt. Your collateral stays deposited until you withdraw it.'
+    : 'Review the remaining debt before confirming. Repayment is available even when the oracle is stale.';
 }
 
 async function renderPrepPreview(kind) {
@@ -586,11 +616,25 @@ async function execute() {
   const raw = ui.amountInput.value.trim();
   if (!/^\d+(\.\d+)?$/.test(raw)) return setMessage('Enter a positive amount.', true);
   try {
+    setPending(true, 'Checking balances…');
     showTransaction();
     await checkWallet();
     const usesCollateral = action === 'deposit' || action === 'withdraw';
-    const amount = parseUnits(raw, usesCollateral ? collateralDecimals : stableDecimals);
+    let amount = parseUnits(raw, usesCollateral ? collateralDecimals : stableDecimals);
     if (amount <= 0n) return setMessage('Enter a positive amount.', true);
+    if (action === 'repay') {
+      const [debt, balance] = await Promise.all([pool.debtOf(account), stable.balanceOf(account)]);
+      snapshot.debt = debt;
+      snapshot.stableBalance = balance;
+      if (repayFull && debt > amount) {
+        ui.amountInput.value = formatUnits(debt, stableDecimals);
+        throw new Error('The debt changed. Review the updated full repayment amount and confirm again.');
+      }
+      const plan = repaymentPlan(debt, balance, amount);
+      if (debt === 0n) throw new Error('This position has no debt to repay.');
+      if (!plan.valid) throw new Error(`Your wallet does not have enough ${stableSymbol} for this repayment.`);
+      amount = plan.payment;
+    }
     if (action === 'borrow' && amount > (snapshot.capacity > snapshot.debt ? snapshot.capacity - snapshot.debt : 0n)) {
       return setMessage('Amount exceeds the currently available credit.', true);
     }
@@ -615,6 +659,7 @@ async function execute() {
     const receipt = await transaction.wait();
     if (receipt?.status !== 1) throw new Error('Transaction did not confirm successfully. Check the explorer before retrying.');
     ui.amountInput.value = '';
+    repayFull = false;
     setMessage(`Transaction confirmed on X Layer: ${transaction.hash}`);
     await refresh(true);
   } catch (error) {
@@ -627,6 +672,7 @@ async function execute() {
 function selectAction(action) {
   if (pending) return;
   selectedAction = action;
+  repayFull = false;
   document.querySelectorAll('.tab').forEach((tab) => tab.classList.toggle('active', tab.dataset.action === action));
   const collateralAction = action === 'deposit' || action === 'withdraw';
   ui.amountLabel.textContent = action === 'redeem' ? 'Liquidity shares to redeem' : `${collateralAction ? collateralSymbol : stableSymbol} amount`;
@@ -644,6 +690,7 @@ function selectAction(action) {
 
 function fillMax() {
   if (!account) return;
+  repayFull = false;
   const values = {
     deposit: [snapshot.collateralBalance, collateralDecimals],
     borrow: [snapshot.capacity > snapshot.debt ? snapshot.capacity - snapshot.debt : 0n, stableDecimals],
@@ -654,11 +701,31 @@ function fillMax() {
   };
   const [value, decimals] = values[selectedAction];
   ui.amountInput.value = formatUnits(value || 0n, decimals);
+  setPending(pending);
 }
 
 ui.connectButton.addEventListener('click', connect);
 ui.actionButton.addEventListener('click', execute);
 ui.maxButton.addEventListener('click', fillMax);
+ui.amountInput.addEventListener('input', renderRepayment);
+ui.repayFullButton.addEventListener('click', () => {
+  if (pending || !account || !marketReady) return;
+  if (repayFull) {
+    repayFull = false;
+    ui.amountInput.value = '';
+    setPending(false);
+    return;
+  }
+  if (!repaymentPlan(snapshot.debt ?? 0n, snapshot.stableBalance ?? 0n, 0n).canRepayFull) return;
+  repayFull = true;
+  ui.amountInput.value = formatUnits(snapshot.debt, stableDecimals);
+  setPending(false);
+});
+ui.withdrawRepaidButton.addEventListener('click', () => {
+  if (pending) return;
+  selectAction('withdraw');
+  fillMax();
+});
 ui.refreshButton.addEventListener('click', () => {
   if (isAssetDesk()) void refreshAssetDesk();
   else if (quoteParams) void refresh();

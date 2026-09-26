@@ -36,6 +36,10 @@ GitHub sync preparation: completed the demo navigation cleanup, corrected its dU
 
 ## Immediate next actions
 
+Repayment desk checkpoint: the Repay tab now shows exact debt, wallet balance, projected remaining debt, and the shortfall for a full repayment. A full-payment selector and a return to partial entry are available, with a separate collateral-withdrawal shortcut once debt is zero. Submission rereads debt and wallet balance before approval, requires another review if full-close debt increased, caps payment at current debt, and locks the form before asynchronous work. This UI targets the existing principal-only testnet pool; the interest-bearing candidate remains undeployed. Arithmetic tests cover atomic-unit precision, partial payments, insufficient funds, zero debt, and invalid amounts. The disconnected panel was inspected in the browser; no wallet-signed repayment was executed. Keep connected-wallet and confirmed repayment-to-withdrawal verification open.
+
+Verification for the repayment desk: `npm run check` passed 30 tests, compiled 15 contracts, and verified the static build. JavaScript syntax and `git diff --check` also passed.
+
 1. Review the dust settlement economics and define market-specific close factors, loss reserve, and liquidation policy with independent review before deployment. Continue invariant and decimal-combination testing after policy choices are explicit.
 2. Complete a wallet connection and record an actual small NVDAx or TSLAx wrap/unwrap transaction only with an authorized, funded wallet. Test testnet mint/deposit, borrow after a fresh authorized oracle update, repay, and withdrawal. Verify real-wallet gas estimates. Keep USDG borrowing disabled for the wrapper-only markets.
 3. Mainnet asset reads and conversion previews are browser-verified. Wallet writes and live credit remain unverified.

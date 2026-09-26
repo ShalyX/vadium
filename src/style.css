@@ -335,6 +335,13 @@ main[data-view="position"] .view-title[data-title="position"], main[data-view="m
 .view-description { display: none; margin: 0 0 2px; max-width: 320px; color: #627976; font-size: 12px; line-height: 1.55; }
 main[data-view="market"] .hero-copy, main[data-view="proof"] .hero-copy { display: none; }
 main[data-view="market"] .view-description[data-description="market"], main[data-view="proof"] .view-description[data-description="proof"] { display: block; }
+.repayment-panel { margin: 14px 0; padding: 16px; border: 1px solid #c5d7ce; border-radius: 6px; background: #f2f7f0; }
+.repayment-panel[hidden] { display: none; }
+.repayment-panel > div { display: flex; justify-content: space-between; gap: 16px; margin-bottom: 10px; font-size: 12px; }
+.repayment-panel strong { text-align: right; overflow-wrap: anywhere; min-width: 0; }
+.repayment-panel p { font-size: 12px; line-height: 1.6; color: #526a65; }
+.repayment-panel button { padding: 10px 12px; background: white; border: 1px solid #176b62; border-radius: 4px; color: #176b62; font-weight: 600; cursor: pointer; }
+.repayment-panel button:disabled { opacity: .5; cursor: not-allowed; }
 .supporting-links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
 .supporting-links a { padding: 9px 11px; border: 1px solid #c5d7ce; border-radius: 4px; color: #176b62; font: 10px DM Mono, monospace; text-decoration: none; }
 .supporting-links a:hover { background: #edf5ee; }
