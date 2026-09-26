@@ -75,6 +75,8 @@ let operatorSupplyPaused = false;
 let prepPreviewVersion = { wrap: 0, unwrap: 0 };
 let prepValid = { wrap: false, unwrap: false };
 let selectedMarket = 'demo';
+let marketLoadVersion = 0;
+let refreshTimer;
 
 const short = (address) => `${address.slice(0, 6)}…${address.slice(-4)}`;
 const number = (value, decimals, digits = 2) => Number(formatUnits(value, decimals)).toLocaleString(undefined, { maximumFractionDigits: digits });
@@ -314,6 +316,7 @@ async function connect() {
 
 async function refresh(force = false) {
   if (!configured() || !pool || refreshing || (pending && !force)) return;
+  const version = marketLoadVersion;
   refreshing = true;
   ui.refreshButton.disabled = true;
   try {
@@ -322,6 +325,7 @@ async function refresh(force = false) {
       liveMarket() ? collateral.convertToAssets(10n ** BigInt(collateralDecimals)) : Promise.resolve(10n ** BigInt(collateralDecimals)),
       liveMarket() ? Promise.all([pool.borrowPaused(), pool.supplyPaused()]) : Promise.resolve([false, false]),
     ]);
+    if (version !== marketLoadVersion || selectedMarket !== 'demo') return;
     const [available, risk] = riskResult;
     if (assets < poolDebt) throw new Error('Pool accounting is inconsistent.');
     riskAvailable = available;
@@ -365,6 +369,7 @@ async function refresh(force = false) {
           underlying.balanceOf(account), collateral.maxDeposit(account), collateral.maxRedeem(account),
         ]) : Promise.resolve([]),
       ]);
+      if (version !== marketLoadVersion || selectedMarket !== 'demo') return;
       const prepReadable = prepState.length === 3 && prepState.every((result) => result.status === 'fulfilled');
       const [underlyingBalance, maxDeposit, maxRedeem] = prepReadable ? prepState.map((result) => result.value) : [];
       snapshot = { collateralAmount, debt, capacity, assets, poolDebt, multiplier, stableBalance,
@@ -389,6 +394,7 @@ async function refresh(force = false) {
     marketReady = true;
     setPending(pending);
   } catch (error) {
+    if (version !== marketLoadVersion || selectedMarket !== 'demo') return;
     setMessage(`Could not refresh live contract state: ${explain(error)}`, true);
     ui.marketPill.textContent = 'READ FAILURE';
     ui.marketPill.className = 'status-pill blocked';
@@ -419,7 +425,7 @@ async function refresh(force = false) {
     setPending(pending);
   } finally {
     refreshing = false;
-    ui.refreshButton.disabled = pending || !pool;
+    if (version === marketLoadVersion && selectedMarket === 'demo') ui.refreshButton.disabled = pending || !pool;
   }
 }
 
@@ -712,10 +718,11 @@ function resetContracts() {
   prepValid = { wrap: false, unwrap: false };
 }
 
-async function refreshAssetDesk() {
+async function refreshAssetDesk(version = marketLoadVersion) {
   if (!isAssetDesk() || !collateral || !underlying || !stable) return;
   try {
     const conversion = await timeout(collateral.convertToAssets(10n ** BigInt(collateralDecimals)), 8_000);
+    if (version !== marketLoadVersion) return;
     if (conversion <= 0n) throw new Error('Wrapped collateral conversion is unavailable.');
     underlyingPerWhole = conversion;
     ui.sessionValue.textContent = 'NO FACILITY';
@@ -743,6 +750,7 @@ async function refreshAssetDesk() {
         underlying.balanceOf(account), collateral.balanceOf(account), stable.balanceOf(account),
         collateral.maxDeposit(account), collateral.maxRedeem(account),
       ]);
+      if (version !== marketLoadVersion) return;
       snapshot = {
         underlyingBalance: raw, collateralBalance: shares, stableBalance: cash,
         maxDeposit, maxRedeem, collateralAmount: 0n, debt: 0n, capacity: 0n, shares: 0n,
@@ -763,6 +771,7 @@ async function refreshAssetDesk() {
     ui.refreshButton.disabled = false;
     setPending(pending);
   } catch (error) {
+    if (version !== marketLoadVersion) return;
     marketReady = false;
     ui.marketPill.textContent = 'READ FAILED';
     ui.marketPill.className = 'status-pill blocked';
@@ -771,7 +780,7 @@ async function refreshAssetDesk() {
   }
 }
 
-async function loadAssetDesk(symbol) {
+async function loadAssetDesk(symbol, version = marketLoadVersion) {
   const market = MARKETS[symbol];
   const network = activeNetwork();
   ui.facilityNotice.hidden = false;
@@ -801,6 +810,7 @@ async function loadAssetDesk(symbol) {
     for (const rpcUrl of rpcCandidates) {
       try {
         await probeRpc(rpcUrl);
+        if (version !== marketLoadVersion) return;
         readProvider = new JsonRpcProvider(new URL(rpcUrl, window.location.href).href, network.chainId, { staticNetwork: true, batchMaxCount: 1 });
         activeRpcUrl = new URL(rpcUrl, window.location.href).href;
         lastError = undefined;
@@ -815,11 +825,17 @@ async function loadAssetDesk(symbol) {
     underlying = new Contract(market.token, erc20Abi, readProvider);
     collateral = new Contract(market.wrapper, erc20Abi, readProvider);
     stable = new Contract(XLAYER.usdg, erc20Abi, readProvider);
-    const [asset, tokenCode, wrapperCode, tokenSymbol, wrapSymbol, tokenDecimals, wrapDecimals, usdgSymbol, usdgDecimals] = await Promise.all([
-      collateral.asset(), readProvider.getCode(market.token), readProvider.getCode(market.wrapper),
-      underlying.symbol(), collateral.symbol(), underlying.decimals(), collateral.decimals(),
-      stable.symbol(), stable.decimals(),
-    ]);
+    const reads = [
+      () => collateral.asset(), () => readProvider.getCode(market.token), () => readProvider.getCode(market.wrapper),
+      () => underlying.symbol(), () => collateral.symbol(), () => underlying.decimals(), () => collateral.decimals(),
+      () => stable.symbol(), () => stable.decimals(),
+    ];
+    const details = [];
+    for (const read of reads) {
+      details.push(await timeout(read(), 8_000));
+      if (version !== marketLoadVersion) return;
+    }
+    const [asset, tokenCode, wrapperCode, tokenSymbol, wrapSymbol, tokenDecimals, wrapDecimals, usdgSymbol, usdgDecimals] = details;
     if (tokenCode === '0x' || wrapperCode === '0x') throw new Error('Token or wrapper code is missing on X Layer.');
     if (asset.toLowerCase() !== market.token) throw new Error('Wrapper asset() does not match the issuer token. Conversion is blocked.');
     if (tokenSymbol.toLowerCase() !== market.symbol.toLowerCase()) throw new Error('Unexpected issuer token symbol.');
@@ -845,13 +861,15 @@ async function loadAssetDesk(symbol) {
       writeUnderlying = underlying.connect(signer);
       writeStable = stable.connect(signer);
     }
-    await refreshAssetDesk();
+    await refreshAssetDesk(version);
+    if (version !== marketLoadVersion) return;
     ui.connectButton.disabled = false;
     ui.connectButton.textContent = account ? short(account) : 'Connect wallet';
     setMessage(account
       ? 'Wrapper verified on X Layer. Review the onchain estimate before converting.'
       : 'Issuer token and V2 wrapper match on X Layer. Connect a mainnet wallet to wrap.');
   } catch (error) {
+    if (version !== marketLoadVersion) return;
     marketReady = false;
     ui.marketPill.textContent = 'READ FAILED';
     ui.marketPill.className = 'status-pill blocked';
@@ -862,6 +880,9 @@ async function loadAssetDesk(symbol) {
 
 async function selectMarket(id) {
   if (pending || id === selectedMarket) return;
+  const version = ++marketLoadVersion;
+  if (refreshTimer) window.clearInterval(refreshTimer);
+  refreshTimer = undefined;
   selectedMarket = id;
   ui.workspaceRoot.dataset.market = id;
   document.querySelectorAll('.market-link[data-market]').forEach((item) => {
@@ -870,11 +891,11 @@ async function selectMarket(id) {
     item.setAttribute('aria-pressed', String(active));
   });
   resetContracts();
-  if (id === 'demo') return init();
-  return loadAssetDesk(id);
+  if (id === 'demo') return init(version);
+  return loadAssetDesk(id, version);
 }
 
-async function init() {
+async function init(version = ++marketLoadVersion) {
   if (!configured()) return setMessage('Contracts are not configured.', true);
   ui.facilityNotice.hidden = true;
   ui.assetIcon.textContent = 'A';
@@ -922,6 +943,7 @@ async function init() {
     for (const rpcUrl of rpcCandidates) {
       try {
         await probeRpc(rpcUrl);
+        if (version !== marketLoadVersion) return;
         const providerUrl = new URL(rpcUrl, window.location.href).href;
         readProvider = new JsonRpcProvider(providerUrl, config.chainId, { staticNetwork: true, batchMaxCount: 1 });
         pool = new Contract(config.pool, poolAbi, readProvider);
@@ -935,7 +957,10 @@ async function init() {
           () => pool.minFreshnessBps(), () => pool.minLiquidityBps(),
         ];
         marketDetails = [];
-        for (const read of reads) marketDetails.push(await timeout(read(), 8_000));
+        for (const read of reads) {
+          marketDetails.push(await timeout(read(), 8_000));
+          if (version !== marketLoadVersion) return;
+        }
         activeRpcUrl = providerUrl;
         break;
       } catch (error) {
@@ -992,13 +1017,16 @@ async function init() {
     ui.quoteUnavailable.textContent = `0 ${stableSymbol}`;
     selectAction(selectedAction);
     await refresh();
+    if (version !== marketLoadVersion) return;
     ui.connectButton.disabled = false;
     ui.connectButton.textContent = account ? short(account) : 'Connect wallet';
     setMessage(!riskAvailable
       ? 'Market loaded. Oracle data is stale, so new borrowing is paused. Deposits and repayments remain available.'
       : account ? 'Wallet connected. Position loaded.' : 'Market loaded. Connect your wallet to start.');
-    window.setInterval(refresh, 20_000);
+    if (refreshTimer) window.clearInterval(refreshTimer);
+    refreshTimer = window.setInterval(refresh, 20_000);
   } catch (error) {
+    if (version !== marketLoadVersion) return;
     setMessage(`Could not initialize market: ${explain(error)}`, true);
     ui.marketPill.textContent = 'READ FAILURE';
     ui.marketPill.className = 'status-pill blocked';

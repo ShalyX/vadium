@@ -4,6 +4,10 @@ Vadium is building revolving USDG credit lines backed by wrapped tokenized equit
 
 **Release target:** a real wrapped xStock / USDG market on X Layer mainnet. The deployed testnet market is for testing. The current mainnet USDG pool uses permissionless demo collateral and is not the release pool. See the [mainnet release plan](docs/mainnet-release.md) for verified asset options, the required wrapper and oracle design, and remaining launch gates.
 
+## X Layer tokenized-asset integration
+
+The [asset preparation desk](assets.html) reads the issuer's NVDAx and TSLAx tokens and current V2 ERC-4626 wrappers on X Layer mainnet. It checks contract code and `asset()` onchain, shows wrapper conversion estimates, and supports wallet-approved wrap and unwrap transactions. The credit workspace also exposes both assets as wrapper-only views. Neither wrapper is connected to an open Vadium USDG credit facility. Onchain reads and conversion previews were verified in the browser; a wallet-signed wrap transaction has not yet been recorded.
+
 ## Live X Layer testnet deployment
 
 - Pool: [`0xE74520d6B698b5Cc61c57152314c46933547751B`](https://www.okx.com/web3/explorer/xlayer-test/address/0xE74520d6B698b5Cc61c57152314c46933547751B)

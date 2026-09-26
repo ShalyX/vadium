@@ -12,14 +12,23 @@
 </head>
 <body>
   <header class="topbar">
-    <a class="brand" href="/">VADIUM<span>.</span></a>
-    <span class="chain">X LAYER MAINNET / ASSETS</span>
+    <a class="brand" href="/">V<span class="brand-rule"></span>VADIUM<span>.</span></a>
+    <span class="chain">ASSET WORKSPACE <i></i> X LAYER MAINNET</span>
     <button id="connectButton" type="button">Connect wallet</button>
   </header>
-  <main>
-    <nav class="breadcrumb" aria-label="Vadium sections"><a href="/">← Position workspace</a><span>/</span><strong>Assets</strong></nav>
+  <main class="workspace-shell">
+    <aside class="app-sidebar" aria-label="Workspace navigation">
+      <div class="sidebar-top"><span class="sidebar-overline">WORKSPACE / 02</span><strong>Wrap desk</strong><p>Inspect issuer assets and prepare wrapper shares in your wallet.</p></div>
+      <nav class="view-nav" aria-label="Vadium sections">
+        <span class="nav-heading">NAVIGATE</span>
+        <a class="view-link" href="/"><span class="nav-index">01</span><span>Credit desk</span><span class="nav-arrow">↗</span></a>
+        <span class="view-link active" aria-current="page"><span class="nav-index">02</span><span>Wrap desk</span><span class="nav-arrow">↗</span></span>
+      </nav>
+      <div class="sidebar-foot"><span class="sidebar-overline">ENVIRONMENT</span><strong>X Layer mainnet</strong><p>Issuer tokens and current V2 wrappers. No Vadium credit facility is open for these assets.</p><span class="sidebar-chain">XL / 196</span></div>
+    </aside>
+    <div class="workspace-content">
     <section class="intro">
-      <div><p class="kicker">TOKENIZED EQUITY / X LAYER</p><h1>Prepare your<br /><em>position.</em></h1></div>
+      <div><p class="kicker">VADIUM / X LAYER</p><h1>Wrap desk</h1></div>
       <p>Inspect the issuer’s X Layer tokens and current V2 wrappers. Convert a supported token into fixed-balance wrapper shares in your own wallet.</p>
     </section>
     <p class="notice"><strong>Asset flow only.</strong> These wrapper shares are not accepted by a live Vadium credit facility yet. Wrapping does not borrow USDG.</p>
@@ -48,6 +57,7 @@
       </div>
     </section>
     <div class="source-row"><a href="https://docs.xstocks.fi/developers/wrapped-xstocks" target="_blank" rel="noreferrer">How xStock wrappers work ↗</a><span>Contracts are verified onchain before this page enables conversion.</span></div>
+    </div>
   </main>
   <script type="module" src="/src/assets.js"></script>
 </body>

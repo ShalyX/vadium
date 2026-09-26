@@ -66,6 +66,7 @@ async function getReadProvider() {
 
 async function loadAsset() {
   const version = ++loadVersion;
+  ++previewVersion;
   verified = false;
   rawToken = undefined;
   wrappedToken = undefined;
@@ -110,25 +111,30 @@ async function loadAsset() {
     ui.assetState.className = 'state ready';
     verified = true;
     status(`${selected} and its V2 wrapper match on X Layer mainnet.`);
-    await refreshBalances();
+    await refreshBalances(version);
   } catch (error) {
     if (version !== loadVersion) return;
+    verified = false;
     ui.assetState.textContent = 'READ FAILED';
     ui.assetState.className = 'state error';
     status(errorText(error), true);
   } finally { if (version === loadVersion) updateAction(); }
 }
 
-async function refreshBalances() {
+async function refreshBalances(version = loadVersion) {
   if (!verified || !account) return;
+  const token = rawToken;
+  const wrapper = wrappedToken;
+  const symbol = selected;
   const [raw, shares, depositLimit, redeemLimit] = await Promise.all([
-    rawToken.balanceOf(account), wrappedToken.balanceOf(account), wrappedToken.maxDeposit(account), wrappedToken.maxRedeem(account),
+    token.balanceOf(account), wrapper.balanceOf(account), wrapper.maxDeposit(account), wrapper.maxRedeem(account),
   ]);
+  if (version !== loadVersion) return;
   rawBalance = raw;
   shareBalance = shares;
   maxDeposit = depositLimit;
   maxRedeem = redeemLimit;
-  ui.rawBalance.textContent = `${quantity(raw, rawDecimals)} ${selected}`;
+  ui.rawBalance.textContent = `${quantity(raw, rawDecimals)} ${symbol}`;
   ui.shareBalance.textContent = `${quantity(shares, shareDecimals)} shares`;
 }
 

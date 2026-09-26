@@ -309,13 +309,21 @@ main[data-market]:not([data-market="demo"]) .start-panel,
 main[data-market]:not([data-market="demo"]) .quote-panel { display: none !important; }
 main[data-market]:not([data-market="demo"]) .connection-status { border-radius: 8px; }
 main[data-market]:not([data-market="demo"]) .collateral-prep { display: block; order: 3; }
+main[data-market]:not([data-market="demo"]) .position-panel,
+main[data-market]:not([data-market="demo"]) .proof-strip { display: none !important; }
+main[data-market]:not([data-market="demo"]) .market-grid { grid-template-columns: 1fr; }
+main[data-market]:not([data-market="demo"]) .terminal { order: 4; }
 main[data-market]:not([data-market="demo"])[data-view="proof"] .collateral-prep,
 main[data-market]:not([data-market="demo"])[data-view="proof"] .facility-notice { display: none !important; }
 .sidebar-foot { margin-top: auto; padding: 22px 13px 0; border-top: 1px solid #315057; }
 .sidebar-foot strong { display: block; margin-top: 9px; font-size: 13px; }
 .sidebar-chain { display: block; margin-top: 18px; color: #c0d2c9; }
 .sidebar-foot-proof { display: none; }
+.sidebar-foot-asset { display: none; }
+main[data-market="NVDAx"] .sidebar-foot-test, main[data-market="TSLAx"] .sidebar-foot-test { display: none; }
+main[data-market="NVDAx"] .sidebar-foot-asset, main[data-market="TSLAx"] .sidebar-foot-asset { display: block; }
 main[data-view="proof"] .sidebar-foot-test { display: none; }
+main[data-view="proof"] .sidebar-foot-asset { display: none; }
 main[data-view="proof"] .sidebar-foot-proof { display: block; }
 .workspace-content { width: min(1240px, 100%); min-width: 0; padding: 32px clamp(24px, 3.3vw, 54px) 58px; display: flex; flex-direction: column; }
 .hero { display: flex; align-items: end; justify-content: space-between; gap: 32px; padding: 8px 0 27px; border-bottom: 1px solid #c6d3ce; }
@@ -366,6 +374,8 @@ main[data-view="market"] .view-description[data-description="market"], main[data
 .amount-field { background: #fcfdf9; }
 .primary-action { margin-top: 10px; min-height: 48px; }
 .collateral-prep { order: 6; margin-top: 16px; border-color: var(--stroke); background: var(--paper); }
+.prep-heading p, .prep-action p, .prep-message { color: #526b66; }
+.prep-action label, .prep-balances { color: #607b73; }
 .quote-panel { order: 7; border-color: var(--stroke); background: var(--paper); }
 .mainnet-proof { order: 8; margin-top: 0; border-color: var(--stroke); background: var(--paper); box-shadow: 0 12px 30px #233c3610; }
 .proof-head { display: flex; justify-content: space-between; gap: 28px; align-items: start; }
