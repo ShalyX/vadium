@@ -72,8 +72,8 @@ test('Credit facility accrues borrower interest into lender share value', async 
   await f.provider.send('evm_increaseTime', [365 * 24 * 3600]);
   await f.provider.send('evm_mine', []);
   const debt = await f.facility.debtOf(borrower);
-  assert.ok(debt > E(1_099) && debt < E(1_101));
-  assert.ok((await f.facility.totalAssets()) > E(20_099));
+  assert.ok(debt > E(1_105) && debt < E(1_106));
+  assert.ok((await f.facility.totalAssets()) > E(20_105));
   await (await f.stable.mint(borrower, E(200))).wait();
   await (await f.stable.connect(f.borrower).approve(await f.facility.getAddress(), E(2_000))).wait();
   await (await f.facility.connect(f.borrower).repay(E(2_000), { gasLimit: 1_000_000 })).wait();
@@ -81,7 +81,7 @@ test('Credit facility accrues borrower interest into lender share value', async 
   const shares = await f.facility.liquidityShares(await f.lender.getAddress());
   const cashBefore = await f.stable.balanceOf(await f.lender.getAddress());
   await (await f.facility.connect(f.lender).withdrawLiquidity(shares, { gasLimit: 1_000_000 })).wait();
-  assert.ok((await f.stable.balanceOf(await f.lender.getAddress())) - cashBefore > E(20_099));
+  assert.ok((await f.stable.balanceOf(await f.lender.getAddress())) - cashBefore > E(20_105));
 });
 
 test('Credit facility records lender loss when exhausted collateral cannot cover debt', async () => {
@@ -132,6 +132,45 @@ test('Credit facility bounds partial repayment rounding and closes all debt afte
   assert.equal(await f.facility.debtOf(borrower), 0n);
   assert.equal(await f.facility.totalDebtShares(), 0n);
   assert.equal(await f.facility.totalDebt(), 0n);
+});
+
+test('Credit facility interest is independent of unrelated accrual calls', async () => {
+  const f = await creditFixture();
+  const borrower = await f.borrower.getAddress();
+  await (await f.facility.connect(f.borrower).borrow(E(1_000), { gasLimit: 1_000_000 })).wait();
+  const snapshot = await f.provider.send('evm_snapshot', []);
+  const year = 365 * 24 * 3600;
+  await f.provider.send('evm_increaseTime', [year]);
+  await f.provider.send('evm_mine', []);
+  await (await f.facility.connect(f.lender).supply(E(1), { gasLimit: 1_000_000 })).wait();
+  await f.provider.send('evm_increaseTime', [year]);
+  await f.provider.send('evm_mine', []);
+  const withIntermediateAccrual = await f.facility.debtOf(borrower);
+  assert.equal(await f.provider.send('evm_revert', [snapshot]), true);
+  await f.provider.send('evm_increaseTime', [2 * year]);
+  await f.provider.send('evm_mine', []);
+  const withoutIntermediateAccrual = await f.facility.debtOf(borrower);
+  const difference = withIntermediateAccrual > withoutIntermediateAccrual
+    ? withIntermediateAccrual - withoutIntermediateAccrual
+    : withoutIntermediateAccrual - withIntermediateAccrual;
+  assert.ok(difference <= 1_000_000_000_000n, `interest differs by ${difference} wei when an unrelated accrual occurs`);
+});
+
+test('Credit facility can close a long-idle loan while the oracle is stale', async () => {
+  const f = await creditFixture();
+  const borrower = await f.borrower.getAddress();
+  await (await f.facility.connect(f.borrower).borrow(E(1_000), { gasLimit: 1_000_000 })).wait();
+  await f.provider.send('evm_increaseTime', [10 * 365 * 24 * 3600]);
+  await f.provider.send('evm_mine', []);
+  assert.equal((await f.oracle.currentRisk(await f.stock.getAddress()))[0], false);
+  const debt = await f.facility.debtOf(borrower);
+  assert.ok(debt > E(2_700) && debt < E(2_750));
+  await (await f.stable.mint(borrower, E(2_000))).wait();
+  await (await f.stable.connect(f.borrower).approve(await f.facility.getAddress(), E(3_000))).wait();
+  await (await f.facility.connect(f.borrower).repay(E(3_000), { gasLimit: 1_000_000 })).wait();
+  assert.equal(await f.facility.debtOf(borrower), 0n);
+  assert.equal(await f.facility.totalDebtShares(), 0n);
+  await (await f.facility.connect(f.borrower).withdrawCollateral(E(10))).wait();
 });
 
 test('Credit facility bounds repeat liquidation and passes exhausted-collateral loss to lenders', async () => {
@@ -186,6 +225,85 @@ test('Credit facility revalues wrapper shares when underlying per share changes'
   await (await wrapper.setAssetsPerShare(E(0.5))).wait();
   assert.equal(await facility.borrowCapacity(borrower), E(650));
   assert.equal(await facility.isLiquidatable(borrower), true);
+});
+
+test('Credit facility isolates two borrowers and shares a realized loss across two lenders', async () => {
+  const f = await creditFixture();
+  const secondBorrower = await f.provider.getSigner(5);
+  const secondLender = await f.provider.getSigner(6);
+  const firstBorrowerAddress = await f.borrower.getAddress();
+  const secondBorrowerAddress = await secondBorrower.getAddress();
+  const secondLenderAddress = await secondLender.getAddress();
+  await (await f.stable.mint(secondLenderAddress, E(20_000))).wait();
+  await (await f.stable.connect(secondLender).approve(await f.facility.getAddress(), E(20_000))).wait();
+  await (await f.facility.connect(secondLender).supply(E(20_000), { gasLimit: 1_000_000 })).wait();
+  await (await f.stock.mint(secondBorrowerAddress, E(100))).wait();
+  await (await f.stock.connect(secondBorrower).approve(await f.facility.getAddress(), E(100))).wait();
+  await (await f.facility.connect(secondBorrower).depositCollateral(E(100))).wait();
+  await (await f.facility.connect(f.borrower).borrow(E(1_300), { gasLimit: 1_000_000 })).wait();
+  await (await f.facility.connect(secondBorrower).borrow(E(500), { gasLimit: 1_000_000 })).wait();
+  assert.equal(await f.facility.totalDebt(), await f.facility.debtOf(firstBorrowerAddress) + await f.facility.debtOf(secondBorrowerAddress));
+  await (await f.oracle.connect(f.publisher).publish(await f.stock.getAddress(), {
+    price: E(50), freshnessBps: 10_000, liquidityBps: 10_000, asOf: f.now + 1, state: 0,
+    inputsHash: ethers.keccak256(ethers.toUtf8Bytes('two-borrower-loss')),
+  })).wait();
+  assert.equal(await f.facility.isLiquidatable(firstBorrowerAddress), true);
+  assert.equal(await f.facility.isLiquidatable(secondBorrowerAddress), false);
+  await (await f.stable.connect(f.liquidator).approve(await f.facility.getAddress(), E(1_300))).wait();
+  await (await f.facility.connect(f.liquidator).liquidate(firstBorrowerAddress, E(1_300), { gasLimit: 1_000_000 })).wait();
+  assert.equal(await f.facility.debtOf(firstBorrowerAddress), 0n);
+  const remainingDebt = await f.facility.debtOf(secondBorrowerAddress);
+  assert.ok(remainingDebt >= E(500) && remainingDebt < E(501));
+  assert.equal(await f.facility.totalDebt(), remainingDebt);
+  const firstShares = await f.facility.liquidityShares(await f.lender.getAddress());
+  const secondShares = await f.facility.liquidityShares(secondLenderAddress);
+  assert.equal(await f.facility.connect(f.lender).withdrawLiquidity.staticCall(firstShares),
+    await f.facility.connect(secondLender).withdrawLiquidity.staticCall(secondShares));
+  const firstBefore = await f.stable.balanceOf(await f.lender.getAddress());
+  await (await f.facility.connect(f.lender).withdrawLiquidity(firstShares, { gasLimit: 1_000_000 })).wait();
+  const firstRecovered = (await f.stable.balanceOf(await f.lender.getAddress())) - firstBefore;
+  assert.ok(firstRecovered < E(20_000));
+  await (await f.stable.mint(secondBorrowerAddress, E(1))).wait();
+  await (await f.stable.connect(secondBorrower).approve(await f.facility.getAddress(), E(501))).wait();
+  await (await f.facility.connect(secondBorrower).repay(E(501), { gasLimit: 1_000_000 })).wait();
+  const secondBefore = await f.stable.balanceOf(secondLenderAddress);
+  await (await f.facility.connect(secondLender).withdrawLiquidity(secondShares, { gasLimit: 1_000_000 })).wait();
+  const secondRecovered = (await f.stable.balanceOf(secondLenderAddress)) - secondBefore;
+  assert.ok(secondRecovered < E(20_000));
+  assert.ok(firstRecovered > secondRecovered ? firstRecovered - secondRecovered < E(1) : secondRecovered - firstRecovered < E(1));
+  assert.equal(await f.facility.totalLiquidityShares(), 0n);
+  assert.equal(await f.facility.totalDebt(), 0n);
+});
+
+test('Credit facility exposes a blocked dust liquidation when collateral value rounds to zero', async () => {
+  const f = await fixture();
+  const borrower = await f.borrower.getAddress();
+  const wrapper = await deploy('MockWrapper', 'MockWrapper.sol', f.owner, [await f.stock.getAddress(), E(1)]);
+  const facility = await deploy('VadiumCreditPool', 'VadiumCreditPool.sol', f.owner, [
+    await f.stable.getAddress(), await wrapper.getAddress(), await f.oracle.getAddress(),
+    await f.stock.getAddress(), 6_500, 8_000, 7_500, 5_000, 3_000, 500, 1_000, E(1_000_000),
+  ]);
+  await (await wrapper.mint(borrower, E(10))).wait();
+  await (await wrapper.connect(f.borrower).approve(await facility.getAddress(), E(10))).wait();
+  await (await f.stable.connect(f.lender).approve(await facility.getAddress(), E(20_000))).wait();
+  await (await facility.connect(f.lender).supply(E(20_000), { gasLimit: 1_000_000 })).wait();
+  await (await f.oracle.connect(f.publisher).publish(await wrapper.getAddress(), {
+    price: E(200), freshnessBps: 10_000, liquidityBps: 10_000, asOf: f.now, state: 0,
+    inputsHash: ethers.keccak256(ethers.toUtf8Bytes('dust-before')),
+  })).wait();
+  await (await facility.connect(f.borrower).depositCollateral(E(10))).wait();
+  await (await facility.connect(f.borrower).borrow(E(1_000), { gasLimit: 1_000_000 })).wait();
+  await (await wrapper.setAssetsPerShare(1n)).wait();
+  await (await f.oracle.connect(f.publisher).publish(await wrapper.getAddress(), {
+    price: 1n, freshnessBps: 10_000, liquidityBps: 10_000, asOf: f.now + 1, state: 0,
+    inputsHash: ethers.keccak256(ethers.toUtf8Bytes('dust-after')),
+  })).wait();
+  assert.equal(await facility.isLiquidatable(borrower), true);
+  await assert.rejects(facility.connect(f.liquidator).liquidate.staticCall(borrower, E(1_000)));
+  await assert.rejects(facility.writeOffBadDebt.staticCall(borrower));
+  assert.equal(await facility.collateralOf(borrower), E(10));
+  const debt = await facility.debtOf(borrower);
+  assert.ok(debt >= E(1_000) && debt < E(1_001));
 });
 
 async function deploy(name, file, signer, args = []) {

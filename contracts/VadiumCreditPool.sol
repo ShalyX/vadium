@@ -179,7 +179,23 @@ contract VadiumCreditPool {
     function currentBorrowIndexRay() public view returns (uint256) {
         if (totalDebtShares == 0 || block.timestamp == lastAccruedAt) return borrowIndexRay;
         uint256 elapsed = block.timestamp - lastAccruedAt;
-        return borrowIndexRay + borrowIndexRay * annualRateBps * elapsed / BPS / YEAR;
+        uint256 ratePerSecondRay = RAY + RAY * annualRateBps / BPS / YEAR;
+        return _mulRay(borrowIndexRay, _rayPow(ratePerSecondRay, elapsed));
+    }
+
+    function _mulRay(uint256 a, uint256 b) internal pure returns (uint256) {
+        return (a * b + RAY / 2) / RAY;
+    }
+
+    /// @dev Nominal annual rate compounded each second. Exponentiation by squaring
+    ///      makes the result independent of how often unrelated transactions accrue.
+    function _rayPow(uint256 base, uint256 exponent) internal pure returns (uint256 result) {
+        result = RAY;
+        while (exponent != 0) {
+            if (exponent & 1 != 0) result = _mulRay(result, base);
+            exponent >>= 1;
+            if (exponent != 0) base = _mulRay(base, base);
+        }
     }
 
     function debtOf(address borrower) public view returns (uint256) {

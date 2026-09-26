@@ -34,17 +34,16 @@ The product promise is **access USDG while retaining the tokenized position, sub
 | Deposit wrapped xStock and draw/repay USDG | Contract path implemented locally; real NVDAx/TSLAx facilities not deployed. |
 | Revolving use of repaid capacity | Supported by the principal-only pool when the oracle and cash permit. |
 | Borrower coverage and liquidation price | Added to the browser; calculated from the current usable onchain price and wrapper conversion. |
-| Accrued interest and lender return | Implemented in a new local-only facility candidate; one-year accrual and lender redemption tests pass. No deployment or independent review. |
+| Accrued interest and lender return | Implemented in a new local-only facility candidate. Nominal APR compounds per second; tests cover long idle periods and accrual-call independence. No deployment or independent review. |
 | Maintenance call, alerting, and cure workflow | Warning view added; formal call policy and monitored alerts missing. |
-| Bad-debt treatment and constrained liquidation | Local candidate writes off debt after collateral exhaustion. Tests now cover repeat liquidation, collateral bounds, and lender redemption after a loss. Close-factor and dust policies, deeper invariants, and independent review remain open. |
+| Bad-debt treatment and constrained liquidation | Local candidate writes off debt after collateral exhaustion. Tests cover repeat liquidation, collateral bounds, two borrowers, and two lenders. [Internal liquidation review](liquidation-review.md) records an unresolved dust deadlock and missing close-factor policy. Independent review remains open. |
 | Real signed oracle operations and audited mainnet launch | Missing. |
 
 ## Next implementation order
 
-1. Build and test interest-bearing debt accounting and lender share value in a **new facility version**. Keep the existing deployed demo pool as evidence; do not migrate user funds through it.
-2. Add explicit facility terms and risk states to the UI. Show interest owed, rate, maintenance buffer, and cure actions before enabling a draw.
-3. Implement bounded liquidation and bad-debt accounting, then adversarial and invariant tests.
-4. Wire real NVDAx and TSLAx V2 wrappers, independent signed feeds, controlled oracle publication, and market-specific limits on testnet or a safe local fork.
-5. Complete external contract review, rights and jurisdiction review, capped mainnet pilot, reconciliation, and monitored release.
+1. Resolve the dust liquidation deadlock and define close factor, reserve, and loss allocation terms for the **local credit candidate**. Add decimal-combination and stateful invariants, then obtain an independent review. Keep the deployed demo pool as evidence; do not migrate funds through it.
+2. Add explicit facility terms and risk states to the UI. Show interest owed, nominal APR with per-second compounding, maintenance buffer, and cure actions before enabling a draw.
+3. Exercise real signed X Layer reports, controlled oracle publication, and market-specific limits for the separately verified NVDAx and TSLAx V2 wrappers in a safe integration environment.
+4. Complete rights and jurisdiction review, a capped mainnet pilot, reconciliation, and monitored release.
 
 The [OKX Builder Kit](https://www.okx.com/learn/okx-dev-day-builder-kit) submission should describe the existing testnet flow and USDG mainnet proof accurately. It should not describe the current demo-collateral pool as a live tokenized-stock Credit facility.
