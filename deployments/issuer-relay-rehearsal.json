@@ -1,0 +1,160 @@
+{
+  "mode": "LOCAL_TEST_FIXTURES_ONLY",
+  "chainId": 1337,
+  "mainnetTransactions": 0,
+  "generatedAt": "2026-09-26T19:03:59.043Z",
+  "binding": {
+    "chainId": 1337,
+    "genesis": "0x775c6cbd6bed726d7af79d788b26356923b87437c4225dd24b358658bdd84a8d",
+    "oracleAddress": "0xf00E8f9be49397Ba546AEeB42419264d6d7dA977",
+    "asset": "0xf7052c024c095130c05Ec05dEB51be1c2BDa78B0",
+    "symbol": "NVDAx",
+    "publisher": "0x2B262c13e56EB032f165823d76B4f68904127875"
+  },
+  "checks": [
+    "X Layer mainnet rejected before signing",
+    "Restart before broadcast submits the persisted transaction",
+    "Lost broadcast response recovered without duplicate nonce; repeated outage sends nothing",
+    "Fresh fixture restores availability; expired fixture publishes an outage",
+    "Revoked publisher records reverted receipt and blocks new signing",
+    "Concurrent run and mismatched journal rejected",
+    "Altered pending report rejected; original persisted transaction recovers"
+  ],
+  "receipts": [
+    {
+      "hash": "0x695412aafc713f17ae13f6b2f2f33d12265bf4364057e9e7a90e85f05a285e3d",
+      "nonce": 0,
+      "status": "confirmed",
+      "blockNumber": 3,
+      "blockHash": "0x46d936dc7121f72e3547c43a019e8b5c259ee9f1ec2c2080a077dbc2386a1361",
+      "gasUsed": "76452",
+      "risk": {
+        "price": "100000000000000000000",
+        "freshnessBps": 10000,
+        "liquidityBps": 10000,
+        "asOf": 1790449436,
+        "state": 0,
+        "inputsHash": "0xb049e7746b23117f04abd05f9085d32a92359fb357991762b1a71315186c312c"
+      },
+      "input": {
+        "source": "LOCAL_TEST_FIXTURE",
+        "symbol": "NVDAx",
+        "priceUsd": "100",
+        "session": "open",
+        "sourceObservedAt": 1790449436
+      }
+    },
+    {
+      "hash": "0x62123bce1711f9024369df71065f302a20ec624c908ab96ce1bc76a9448f5d39",
+      "nonce": 1,
+      "status": "confirmed",
+      "blockNumber": 5,
+      "blockHash": "0x56f46026181ef885561c2db9ffdb2b3c16e4c20e88c5324f5e771d9bea9c9a0b",
+      "gasUsed": "42146",
+      "risk": {
+        "price": "0",
+        "freshnessBps": 0,
+        "liquidityBps": 0,
+        "asOf": 1790449438,
+        "state": 2,
+        "inputsHash": "0x6571c3f0cb8416d03c2e9ac32adff9143de16749043c6cddeb5e73d690455b71"
+      },
+      "input": {
+        "source": "ISSUER_HTTP",
+        "quote": null
+      }
+    },
+    {
+      "hash": "0xdde9ddcae801c0ee3ce27f06e1ed425354dfd80ab0e147f1a6711122d07548db",
+      "nonce": 2,
+      "status": "confirmed",
+      "blockNumber": 7,
+      "blockHash": "0xd03a28603213400d12a5ed90f0ab6e876834b657a5125a5e811c67b679ec0a49",
+      "gasUsed": "42252",
+      "risk": {
+        "price": "100000000000000000000",
+        "freshnessBps": 10000,
+        "liquidityBps": 10000,
+        "asOf": 1790449441,
+        "state": 0,
+        "inputsHash": "0xaa5455dd932972d206b56e7f15869eedbe33a4803f5bc51189a51134ff405618"
+      },
+      "input": {
+        "source": "LOCAL_TEST_FIXTURE",
+        "symbol": "NVDAx",
+        "priceUsd": "100",
+        "session": "open",
+        "sourceObservedAt": 1790449441
+      }
+    },
+    {
+      "hash": "0x1fe1f6b59463da2a9773281673b6399b113544354ac28e2dcfc18f049bf58973",
+      "nonce": 3,
+      "status": "confirmed",
+      "blockNumber": 9,
+      "blockHash": "0xc0f195c703283ca0c56147896c9408b53041489b31c801d14a555ae07d06c615",
+      "gasUsed": "39346",
+      "risk": {
+        "price": "0",
+        "freshnessBps": 0,
+        "liquidityBps": 0,
+        "asOf": 1790449502,
+        "state": 2,
+        "inputsHash": "0xaa5455dd932972d206b56e7f15869eedbe33a4803f5bc51189a51134ff405618"
+      },
+      "input": {
+        "source": "LOCAL_TEST_FIXTURE",
+        "symbol": "NVDAx",
+        "priceUsd": "100",
+        "session": "open",
+        "sourceObservedAt": 1790449441
+      }
+    },
+    {
+      "hash": "0x92ae0e1839d52d90f152bdefe1686ed652cd2209f7d5900408a110824b6b2900",
+      "nonce": 4,
+      "status": "reverted",
+      "blockNumber": 12,
+      "blockHash": "0x29ee18d129efe59debf7ce5f7b37abd4341d1292224e57d575486d427709ba56",
+      "gasUsed": "25384",
+      "risk": {
+        "price": "100000000000000000000",
+        "freshnessBps": 10000,
+        "liquidityBps": 10000,
+        "asOf": 1790449505,
+        "state": 0,
+        "inputsHash": "0x9e680dc6a70c1a89dd88439d235d3cce97a8cde1c883e7647a12bfb2231eb24e"
+      },
+      "input": {
+        "source": "LOCAL_TEST_FIXTURE",
+        "symbol": "NVDAx",
+        "priceUsd": "100",
+        "session": "open",
+        "sourceObservedAt": 1790449505
+      }
+    },
+    {
+      "hash": "0x16fc0a4b09a30790343d6f78dcd3ef837a59de7a86d9571fe7ec9c5e5b2f1448",
+      "nonce": 5,
+      "status": "confirmed",
+      "blockNumber": 15,
+      "blockHash": "0xd44117b5225769141caf456fab80c8520775a1f68e6c14d3e0a68d8c84577a18",
+      "gasUsed": "42252",
+      "risk": {
+        "price": "100000000000000000000",
+        "freshnessBps": 10000,
+        "liquidityBps": 10000,
+        "asOf": 1790449507,
+        "state": 0,
+        "inputsHash": "0xebd7ca1ffce5c4a29adfa4355d21d852234b110b5e955f93a1e7bb2fc838fbbb"
+      },
+      "input": {
+        "source": "LOCAL_TEST_FIXTURE",
+        "symbol": "NVDAx",
+        "priceUsd": "100",
+        "session": "open",
+        "sourceObservedAt": 1790449507
+      }
+    }
+  ]
+}

@@ -1,5 +1,9 @@
 # Vadium mainnet release plan
 
+**Private pilot completed, 26 September:** real wrapped NVDAx backed a 0.005 USDG draw on X Layer. The participant repaid 0.005001 USDG, withdrew collateral and redeemed 0.020001 USDG. Debt, collateral, lender shares and pool cash are zero at block 71672097. Evidence: `deployments/private-pilot.onchain-evidence.json`. This verifies execution under the authorized synthetic-price pilot; real signed-report and public-release gates remain open.
+
+**Private execution exception, 26 September:** the user authorized a tiny self-funded mainnet pilot using a clearly synthetic operator-set price. The dedicated contract permanently restricts every financial entrypoint to the pilot wallet, with 0.02 USDG lifetime supply and 0.01 USDG new-debt limits. See [private pilot scope and evidence](private-mainnet-pilot.md). This does not open a public facility or satisfy the signed-report release gate.
+
 **Product target:** separate NVDAx and TSLAx revolving USDG credit lines on X Layer, each secured by the issuer's current non-rebasing wrapper. The [credit quality benchmark](credit-quality-benchmark.md) defines the full facility requirements. Testnet is for integration and failure testing. The existing X Layer mainnet USDG pool uses mintable demo collateral and is transaction evidence only; it must not receive user funds.
 
 ## Verified collateral options
@@ -16,6 +20,8 @@ Checked against the [xStocks public assets API](https://docs.xstocks.fi/apis/ope
 The canonical X Layer USDG address is `0x4ae46a509f6b1d9056937ba4500cb143933d2dc8`, also listed in [OKX's X Layer contract directory](https://web3.okx.com/onchainos/dev-docs/xlayer/developer/build-on-xlayer/contracts). The issuer API reports six decimals for its X Layer USDG route. Do not substitute a similarly named token.
 
 ## Integration design
+
+Credit rehearsal checkpoint: the current interest-bearing candidate completed the full wrapped-collateral loan flow on X Layer testnet at `0xf85b2c5e44eEEd897E2eD708819EfA6E82Efb751`. See [reproduction instructions](credit-pilot.md) and `deployments/credit-pilot.testnet.json`. It uses demo assets and a mock report verifier; real signed-report validation and independent review remain open. This deployment does not change the hosted credit desk or open a mainnet market.
 
 Mainnet recheck, 26 September 2026: `npm run verify:assets -- NVDAx TSLAx` passed against the issuer API and X Layer. NVDAx's Chainlink v10 feed is `0x000a37a55df2ef907d8fa06af6632bc16da58a62b68be2e1994efaa037a0918a`; TSLAx's is `0x000a80c655069b61d168b887d5e7f4231fe288c6ccb84b1854c9ccead20f3398`. Both list verifier `0xcE73c8ad08CBDEaCa6078BF0627C8fe0a9a536E7`. Observed underlying units per whole wrapper share were `1001701196801074000` for NVDAx and `1000000000000000000` for TSLAx. Neither asset was reported halted. Feed registration is not proof of subscription access or signed-report verification.
 

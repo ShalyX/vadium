@@ -1,85 +1,65 @@
 # Vadium
 
-The site opens at the [landing page](index.html). The [credit desk](app.html) contains the interactive testnet prototype and mainnet transaction proof; the [wrap desk](assets.html) inspects issuer tokens and V2 wrappers on X Layer mainnet.
+**USDG credit against wrapped tokenized equity on X Layer.**
 
-Vadium is building revolving USDG credit lines backed by wrapped tokenized equity positions on X Layer. The first release target is separate NVDAx and TSLAx facilities. The [credit quality benchmark](docs/credit-quality-benchmark.md) defines the borrower journey, interest and lender economics, coverage controls, and mainnet release gates. The current pool is a principal-only prototype: it changes new credit when the reference market is closed, price data is old, or onchain liquidity is thin, while keeping repayment and collateral top-ups available.
+Vadium is building separate revolving NVDAx and TSLAx credit lines. Borrowers wrap issuer tokens, deposit collateral, draw USDG, then repay and recover their position. Lenders earn the interest paid by borrowers.
 
-**Release target:** a real wrapped xStock / USDG market on X Layer mainnet. The deployed testnet market is for testing. The current mainnet USDG pool uses permissionless demo collateral and is not the release pool. See the [mainnet release plan](docs/mainnet-release.md) for verified asset options, the required wrapper and oracle design, and remaining launch gates.
+[Hosted product](https://vadium.vercel.app) · [Repository](https://github.com/ShalyX/vadium) · [Review package](docs/review-package.md)
 
-## X Layer tokenized-asset integration
+## What works
 
-The [asset preparation desk](assets.html) reads the issuer's NVDAx and TSLAx tokens and current V2 ERC-4626 wrappers on X Layer mainnet. It checks contract code and `asset()` onchain, shows wrapper conversion estimates, and supports wallet-approved wrap and unwrap transactions. Neither wrapper is connected to an open Vadium USDG credit facility. Onchain reads and conversion previews were verified in the browser; a wallet-signed wrap transaction has not yet been recorded.
+| Component | Verified scope |
+| --- | --- |
+| Asset integration | Current issuer V2 NVDAx and TSLAx wrappers on X Layer; token checks, balances, conversion previews and wallet wrap/unwrap |
+| Private mainnet cycle | Real wrapped NVDAx; 0.005 USDG borrowed, 0.005001 repaid and 0.020001 redeemed by the lender |
+| Credit candidate | Interest, wrapper valuation, liquidation and lender-loss accounting tested locally |
+| Local relay | Durable transaction publication, restart recovery, outage handling and receipt validation |
+| Combined rehearsal | Wrap through lender redemption, including outage, top-up, repayment, recovery and redraw |
 
-## Live X Layer testnet deployment
+**Public borrowing is unavailable.** The mainnet pilot was restricted to one participant and used a fixed synthetic $100 underlying price. It verifies execution, not a live market feed. Local rehearsal assets and prices are explicitly synthetic.
 
-- Pool: [`0xE74520d6B698b5Cc61c57152314c46933547751B`](https://www.okx.com/web3/explorer/xlayer-test/address/0xE74520d6B698b5Cc61c57152314c46933547751B)
-- Market risk oracle: [`0xbC3b450c649Fb3020AE1C692b502BF85d6cD390a`](https://www.okx.com/web3/explorer/xlayer-test/address/0xbC3b450c649Fb3020AE1C692b502BF85d6cD390a)
-- Demo AAPLx: [`0x235b537e0bc3549959E0aebf5528d8677E43FB02`](https://www.okx.com/web3/explorer/xlayer-test/address/0x235b537e0bc3549959E0aebf5528d8677E43FB02)
-- Demo dUSD: [`0x588eb96429A3c22f22848185F2b5FfD08AdfD8Ae`](https://www.okx.com/web3/explorer/xlayer-test/address/0x588eb96429A3c22f22848185F2b5FfD08AdfD8Ae)
+## Review the evidence
 
-The pool was initialized with 50,000 dUSD of test liquidity. The app reads the oracle and pool directly from X Layer testnet. The oracle update expires after six hours; the interface shows a paused state when it does. The [latest risk publication](https://www.okx.com/web3/explorer/xlayer-test/tx/0x25e6a417adcedb792c6521bbe568364e846a4184b6711e2f230c330e0f103c06) used the confirmed AAPLx candle dataset.
+Run locally and open `/review.html` for a wallet-free build overview. `/assets.html` reads mainnet wrappers. `/app.html` shows the private credit desk and eight recorded steps. The internal testnet prototype is at `/testnet.html`.
 
-## Real USDG mainnet proof
+- Private facility: `0x7539200A18333B77F6C4a2f8a7cbc61dddFb5E08`
+- [Credit receipts](deployments/private-pilot.onchain-evidence.json) and [wrapper receipts](deployments/private-pilot.wrapper-evidence.json)
+- [Combined local rehearsal](deployments/credit-relay-rehearsal.json)
+- [Pilot scope and restrictions](docs/private-mainnet-pilot.md)
 
-An experimental pool is deployed on X Layer mainnet with the canonical USDG contract as its stable asset. The collateral remains a demo AAPLx token that anyone can mint. This deployment is transaction proof; **do not supply real funds to this pool**.
+At recorded block 71,672,097, debt, deposited collateral, lender shares and pool cash were zero. This is historical evidence. Older demo-collateral deployments are experiments and must not receive deposits.
 
-- Pool: [`0x5d2194c68E3b0902b0B2f95eDd53Bc2De31d18cd`](https://www.okx.com/web3/explorer/xlayer/address/0x5d2194c68E3b0902b0B2f95eDd53Bc2De31d18cd)
-- Market risk oracle: [`0x1d1dEda15055948e274c716B062928B3239D8DE3`](https://www.okx.com/web3/explorer/xlayer/address/0x1d1dEda15055948e274c716B062928B3239D8DE3)
-- Demo AAPLx: [`0xeae5140AB19f9f08D4fE18015B5B40896a5821EC`](https://www.okx.com/web3/explorer/xlayer/address/0xeae5140AB19f9f08D4fE18015B5B40896a5821EC)
-- USDG: [`0x4ae46a509F6b1D9056937BA4500cb143933D2dc8`](https://www.okx.com/web3/explorer/xlayer/address/0x4ae46a509F6b1D9056937BA4500cb143933D2dc8)
-- Real borrow proof: [`0xa882397229c4ab8557a77f77bba2d790dec51184a3a8254469bc706f45d6d585`](https://www.okx.com/web3/explorer/xlayer/tx/0xa882397229c4ab8557a77f77bba2d790dec51184a3a8254469bc706f45d6d585)
-- Repayment while risk was paused: [`0x218343687fdcb833a85d395b39a5b351da8de66b31d4a58cfd52d3c71272194b`](https://www.okx.com/web3/explorer/xlayer/tx/0x218343687fdcb833a85d395b39a5b351da8de66b31d4a58cfd52d3c71272194b)
+## Run and verify
 
-The proof supplied `0.01 USDG`, borrowed `0.005 USDG`, reduced capacity from `2.179967` to `1.634975 USDG` when the market closed, and reduced new credit to zero when data became unavailable. Repayment remained enabled. The collateral and liquidity were then withdrawn, leaving zero debt and returning the wallet's USDG balance to its starting value.
+Use Node.js 24 and npm. No wallet key or subscription is needed for the build and local tests.
 
-## MVP scope
-
-- One isolated xStock/stablecoin lending pool per deployment
-- Lender deposits and share-based withdrawals
-- Collateral deposit, borrow, repay, collateral withdrawal, and liquidation
-- Onchain market state, freshness, liquidity, price, timestamp, and input commitment
-- Wallet-connected interface with no silent demo fallback
-- X Layer testnet demo deployment script with faucet-style mock assets
-
-The browser prototype now lets a new testnet user mint demo AAPLx or dUSD, preview borrowing power before depositing, deposit collateral, borrow, repay, withdraw, supply liquidity, and redeem shares. Pool liquidity and the market risk state are visible before wallet connection. The oracle publisher is still operator-run; it is not an unattended data service. The mainnet USDG proof uses demo collateral and should be treated as transaction evidence, not as a live lending market for real collateral.
-
-When a reviewed mainnet market is configured with `marketMode: 'live'`, the app also shows the issuer wrapper flow: wallet balances, `previewDeposit`/`previewRedeem` estimates, exact-amount approval for raw xStock, wrap, and unwrap after collateral withdrawal. These controls remain hidden on the testnet demo and the read-only mainnet proof. Wrapping uses the current V2 ERC-4626 wrapper; it does not imply that a mainnet lending pool has been approved or deployed.
-
-The demo token contracts are deliberately permissionless faucets. They are not production assets. A production deployment requires real collateral contracts, reviewed oracle operations, and audited pool code.
-
-## Verify locally
-
-Install the pinned dependencies in this repository, then run the full check:
-
-```bash
+```sh
 npm ci --ignore-scripts
 npm run check
-npm run verify:assets
+npm run dev
 ```
 
-Serve `public/` with any static server, or run `npm run dev` to open the local build at `http://127.0.0.1:4173`. The build copies the pinned Ethers browser module locally, so wallet actions do not depend on a CDN script at runtime. Until `deployment-config.js` contains deployed addresses, the interface clearly reports that it is unconfigured and will not simulate balances or transactions.
+Open `http://127.0.0.1:4173`. Mainnet reads need network access; wallet transactions need an injected wallet. Missing access is reported instead of replaced with simulated balances.
 
-## Deploy the demo to X Layer testnet
+```sh
+npm run rehearse:relay
+npm run rehearse:credit-relay
+npm run check:issuer
+npm run package:review
+```
 
-1. Copy `.env.example` to `.env.local`.
-2. Add a dedicated testnet deployer private key with testnet OKB. Never use a wallet that holds real funds.
-3. Run `npm run deploy:demo`.
-4. The script deploys demo dUSD, demo AAPLx, the oracle, and the pool; seeds lender liquidity; publishes the initial risk state; and updates `deployment-config.js`.
+The last full contract gate passed 42 tests and compiled 17 contracts. The relay commands generate labelled local evidence; the issuer command is read-only. Review requires no new deployment. See the [relay runbook](docs/issuer-relay.md).
 
-The mainnet proof scripts are deliberately gated by `RUN_VADIUM_MAINNET=1`. `npm run deploy:usdg` deploys an empty real-USDG pool, while `npm run demo:usdg` runs the reversible micro-loan and writes its receipt evidence to `deployments/loan-demo-usdg.json`.
+## Release boundaries
 
-After refreshing the OKX candle dataset, run `npm run publish:risk`. The publisher uses the last confirmed non-zero-volume observation, the existing decaying freshness formula, and volume normalized against the ticker's own historical hour-of-week. If either component is unavailable, it publishes an explicit halt instead of manufacturing a confidence score. The current market calendar check covers weekday/session hours; exchange holidays remain a documented MVP limitation.
+Shares are valued using `convertToAssets` and an underlying price. New credit needs acceptable data; repayments and top-ups remain available during outages. Interest and realized losses affect lender share value.
 
-Verified X Layer network values:
+Mainnet relay publication remains disabled. The issuer HTTP endpoint has not provided usable pricing with a documented observation time. Public lending also needs reviewed risk/liquidity parameters, operational controls, rights/jurisdiction review and independent contract review. See the [release plan](docs/mainnet-release.md).
 
-- Mainnet: chain ID `196`, RPC `https://rpc.xlayer.tech`
-- Testnet: chain ID `1952`, RPC `https://testrpc.xlayer.tech/terigon`
-- Mainnet USDG: `0x4ae46a509F6b1D9056937BA4500cb143933D2dc8`
+xStocks are tracker certificates with economic exposure, not direct company shares. No universal tax outcome or guaranteed liquidity is promised.
 
-Official references: [X Layer network information](https://web3.okx.com/onchainos/dev-docs/xlayer/developer/build-on-xlayer/network-information), [X Layer contracts and token addresses](https://web3.okx.com/onchainos/dev-docs/xlayer/developer/build-on-xlayer/contracts).
+## Package status
 
-## Safety model
+This package may be newer than the hosted site or GitHub default branch. Match its file manifest before presenting a deployment as the reviewed build. [Demo script](docs/demo-script.md) and [dependency notices](THIRD_PARTY_NOTICES.md) are included. The video still needs recording.
 
-The credit multiplier is the minimum of freshness and normalized liquidity, capped at 100%. A closed session applies an additional configured factor. These values constrain borrowing and collateral withdrawals only. Liquidation uses a separate fixed threshold and requires a current, non-halted oracle price.
-
-This separation prevents the protocol from creating a predictable liquidation cliff at the traditional market close.
+The official deadline was 25 September 2026 at 23:59 UTC. Late acceptance is unverified; newer work retains its actual timestamps.

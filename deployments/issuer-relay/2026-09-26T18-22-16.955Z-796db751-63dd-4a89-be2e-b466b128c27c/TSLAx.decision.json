@@ -1,0 +1,27 @@
+{
+  "symbol": "TSLAx",
+  "chainId": 196,
+  "collateral": "0xc3fdbe3a68ee5de461d30415a8165cf9aefe1171",
+  "publishable": false,
+  "trustModel": "operator-relayed-unsigned-issuer-api",
+  "indicativePrice18": null,
+  "sourceObservedAt": null,
+  "reasons": [
+    "METADATA_FETCH_FAILED",
+    "PRICE_FETCH_FAILED"
+  ],
+  "inputsHash": "0xb607c6bd21b96ead4008a829625ac0e58cf3d9345c65854695c0320b04f552aa",
+  "outageDraft": {
+    "price": "0",
+    "freshnessBps": 0,
+    "liquidityBps": 0,
+    "asOf": 1790446962,
+    "state": 2,
+    "inputsHash": "0xb607c6bd21b96ead4008a829625ac0e58cf3d9345c65854695c0320b04f552aa"
+  },
+  "outageCalldata": "0x2444567c000000000000000000000000c3fdbe3a68ee5de461d30415a8165cf9aefe1171000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000006ab80d720000000000000000000000000000000000000000000000000000000000000002b607c6bd21b96ead4008a829625ac0e58cf3d9345c65854695c0320b04f552aa",
+  "mode": "dry-run",
+  "transactionSent": false,
+  "oracleAddress": null,
+  "note": "Outage calldata only. No price publication, key loading or existing oracle change. Recompute timestamp against chain before any future authorized submission."
+}

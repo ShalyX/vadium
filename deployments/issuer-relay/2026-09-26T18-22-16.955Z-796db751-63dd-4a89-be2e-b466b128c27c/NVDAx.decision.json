@@ -1,0 +1,26 @@
+{
+  "symbol": "NVDAx",
+  "chainId": 196,
+  "collateral": "0xa8ddb5cd96b5222afe198316e9a57caa642850d5",
+  "publishable": false,
+  "trustModel": "operator-relayed-unsigned-issuer-api",
+  "indicativePrice18": null,
+  "sourceObservedAt": null,
+  "reasons": [
+    "PRICE_TIMEOUT"
+  ],
+  "inputsHash": "0x25beaafabb0012d1434270b801cd2dfafc7896a4a4f99b63a56a9476632d319b",
+  "outageDraft": {
+    "price": "0",
+    "freshnessBps": 0,
+    "liquidityBps": 0,
+    "asOf": 1790446952,
+    "state": 2,
+    "inputsHash": "0x25beaafabb0012d1434270b801cd2dfafc7896a4a4f99b63a56a9476632d319b"
+  },
+  "outageCalldata": "0x2444567c000000000000000000000000a8ddb5cd96b5222afe198316e9a57caa642850d5000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000006ab80d68000000000000000000000000000000000000000000000000000000000000000225beaafabb0012d1434270b801cd2dfafc7896a4a4f99b63a56a9476632d319b",
+  "mode": "dry-run",
+  "transactionSent": false,
+  "oracleAddress": null,
+  "note": "Outage calldata only. No price publication, key loading or existing oracle change. Recompute timestamp against chain before any future authorized submission."
+}

@@ -4,13 +4,24 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+for (const file of ['review.html', 'favicon.svg', 'src/review.css']) {
+  assert.ok(fs.statSync(path.join(root, file)).size > 0, `${file} is missing or empty`);
+}
+const review = fs.readFileSync(path.join(root, 'review.html'), 'utf8');
+assert.match(review, /LOCAL TEST FIXTURES/);
+assert.match(review, /Public borrowing is unavailable/);
+assert.match(review, /credit-relay-evidence\.json/);
 for (const file of ['index.html', 'app.html', 'assets.html', 'deployment-config.js', 'src/app.js', 'src/assets.js', 'src/assets.css', 'src/landing.css', 'src/markets.js', 'src/style.css']) {
   assert.ok(fs.statSync(path.join(root, file)).size > 0, `${file} is missing or empty`);
 }
 const landing = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 assert.match(landing, /href="\/app\.html"/);
 assert.match(landing, /src\/landing\.css/);
-const html = fs.readFileSync(path.join(root, 'app.html'), 'utf8');
+const desk = fs.readFileSync(path.join(root, 'app.html'), 'utf8');
+assert.match(desk, /src\/pilot\.js/);
+assert.match(desk, /id="positionTitle"/);
+assert.match(desk, /id="historyRows"/);
+const html = fs.readFileSync(path.join(root, 'testnet.html'), 'utf8');
 assert.match(html, /deployment-config\.js/);
 assert.match(html, /src\/app\.js/);
 assert.match(html, /src\/style\.css/);

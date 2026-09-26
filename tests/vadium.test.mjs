@@ -10,6 +10,80 @@ import { calculateCoverage } from '../src/coverage.js';
 import { repaymentPlan } from '../src/repayment.js';
 import { injectedWallet, switchWalletNetwork, assertWalletSession } from '../src/wallet.js';
 import { INTEGRATION_TERMS, MARKETS, XLAYER } from '../src/markets.js';
+import { pilotActions, pilotPosition } from '../src/pilot-state.js';
+import { evaluateIssuerPrice, fetchIssuerJson, unavailableRisk } from '../scripts/issuer-price-model.mjs';
+
+test('issuer relay rejects null quotes, unknown schema and unprovable price age', () => {
+  const market = {...MARKETS.NVDAx, symbol:'NVDAx'};
+  const metadata = {symbol:'NVDAx',underlying:{currency:'USD'},isTradingHalted:false,
+    trading:{currency:'USD',isTradingHalted:false,openNow:true,currentPeriod:'market'},
+    deployments:[{network:'XLayer',address:market.token,wrapperAddressV2:market.wrapper}]};
+  const evaluate = priceResponse => evaluateIssuerPrice({market,metadata,priceResponse});
+  assert.ok(evaluate({quote:null}).reasons.includes('QUOTE_UNAVAILABLE'));
+  for (const quote of [0,-1,'100',Infinity,NaN]) assert.ok(evaluate({quote}).reasons.includes('INVALID_QUOTE'));
+  const quote = evaluate({quote:150.25, timestamp:Date.now(), signature:'pretend'});
+  assert.equal(quote.indicativePrice18,E(150.25).toString());
+  assert.equal(quote.sourceObservedAt,null);
+  assert.equal(quote.publishable,false);
+  assert.deepEqual(quote.reasons,['SOURCE_OBSERVATION_TIME_UNAVAILABLE']);
+  assert.ok(evaluateIssuerPrice({market,metadata:{...metadata,symbol:'TSLAx'},priceResponse:{quote:100}}).reasons.includes('ASSET_IDENTITY_MISMATCH'));
+  assert.ok(evaluateIssuerPrice({market,metadata:{...metadata,deployments:{}},priceResponse:{quote:100}}).reasons.includes('ASSET_IDENTITY_MISMATCH'));
+  assert.ok(evaluateIssuerPrice({market,metadata:{...metadata,deployments:[{network:'XLayer',address:123,wrapperAddressV2:null}]},priceResponse:{quote:100}}).reasons.includes('ASSET_IDENTITY_MISMATCH'));
+  assert.ok(evaluateIssuerPrice({market,metadata:{...metadata,trading:{...metadata.trading,openNow:false,currentPeriod:'closed'}},priceResponse:{quote:100}}).reasons.includes('MARKET_CLOSED'));
+});
+
+test('issuer HTTP pipeline records errors instead of producing fallback prices', async () => {
+  const url = 'https://api.xstocks.fi/api/v2/public/assets/NVDAx/price-data';
+  const get = response => fetchIssuerJson(url,{fetchImpl:async()=>response});
+  assert.equal((await get(new Response('{"quote":null}'))).data.quote,null);
+  assert.equal((await get(new Response('not JSON'))).error,'MALFORMED_JSON');
+  assert.equal((await get(new Response('[]'))).error,'INVALID_RESPONSE');
+  const limited = await get(new Response('rate limited',{status:429,headers:{'retry-after':'60'}}));
+  assert.equal(limited.error,'HTTP_ERROR');
+  assert.equal(limited.headers['retry-after'],'60');
+  assert.equal((await fetchIssuerJson(url,{fetchImpl:async()=>{throw new DOMException('timeout','TimeoutError');}})).error,'TIMEOUT');
+});
+
+test('issuer outage draft blocks credit increases but preserves repayment, top-up and exit', async () => {
+  const f = await creditFixture();
+  const who = await f.borrower.getAddress();
+  await (await f.facility.connect(f.borrower).borrow(E(100),{gasLimit:1000000})).wait();
+  await f.provider.send('evm_increaseTime',[5]);
+  await f.provider.send('evm_mine',[]);
+  const now = Number.parseInt((await f.provider.send('eth_getBlockByNumber',['latest',false])).timestamp,16);
+  const raw = ethers.toUtf8Bytes('{"quote":null}');
+  const risk = unavailableRisk(now,ethers.keccak256(raw));
+  await (await f.oracle.connect(f.publisher).publish(await f.stock.getAddress(),risk,{gasLimit:1000000})).wait();
+  assert.equal(await f.oracle.verifyInputs(await f.stock.getAddress(),raw),true);
+  assert.equal(await f.facility.borrowCapacity(who),0n);
+  await assert.rejects(f.facility.connect(f.borrower).borrow.staticCall(E(1)));
+  assert.equal(await f.facility.isLiquidatable(who),false);
+  await (await f.facility.connect(f.borrower).depositCollateral(E(1),{gasLimit:1000000})).wait();
+  await (await f.stable.mint(who,E(1))).wait();
+  await (await f.stable.connect(f.borrower).approve(await f.facility.getAddress(),E(101))).wait();
+  await (await f.facility.connect(f.borrower).repay(E(101),{gasLimit:1000000})).wait();
+  await (await f.facility.connect(f.borrower).withdrawCollateral(E(11),{gasLimit:1000000})).wait();
+  assert.equal(await f.facility.debtOf(who),0n);
+  assert.equal(await f.facility.collateralOf(who),0n);
+});
+
+test('completed private position cannot restart preparation after its lifetime supply is redeemed', () => {
+  const state = { supplied: 20000n, lender: 0n, cash: 0n, debt: 0n, collateral: 0n, wrapped: 0n, raw: 100000n, wrapAmount: 100n, balance: 100000n, capacity: 0n, active: true };
+  assert.equal(pilotPosition(state).title, 'Position closed');
+  assert.ok(Object.values(pilotActions(state)).every(x => x === false));
+  assert.equal(pilotActions({ ...state, wrapped: 100n }).unwrap, true);
+  assert.equal(pilotActions({ ...state, wrapped: 100n }).deposit, false);
+});
+
+test('private desk preserves exit controls after expiry or pause', () => {
+  const state = { supplied: 20000n, lender: 20000n, cash: 15000n, debt: 5001n, collateral: 100n, wrapped: 0n, raw: 100000n, wrapAmount: 100n, balance: 100000n, capacity: 25000n, active: false };
+  assert.equal(pilotActions(state).repay, true);
+  assert.equal(pilotActions(state).borrow, false);
+  assert.equal(pilotActions(state).withdraw, false);
+  assert.equal(pilotActions({ ...state, debt: 0n }).withdraw, true);
+  assert.equal(pilotActions({ ...state, debt: 0n }).redeem, true);
+  assert.equal(pilotActions({ ...state, debt: 0n, collateral: 0n, wrapped: 100n }).unwrap, true);
+});
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 function compile() {
@@ -34,6 +108,56 @@ function compile() {
 const contracts = compile();
 const artifact = (file, name) => contracts[file][name];
 const E = (value) => ethers.parseUnits(String(value), 18);
+
+test('private pilot enforces every financial entry, lifetime cap, debt cap and expired-price exit', async () => {
+  const rpc = ganache.provider({ logging: { quiet: true } });
+  const provider = new ethers.BrowserProvider(rpc);
+  const pilot = await provider.getSigner(0);
+  const stranger = await provider.getSigner(1);
+  const who = await pilot.getAddress();
+  const stable = await deploy('MockERC20', 'MockERC20.sol', pilot, ['USDG test', 'USDG', 6]);
+  const stock = await deploy('MockERC20', 'MockERC20.sol', pilot, ['NVDA test', 'NVDAx', 18]);
+  const wrapper = await deploy('MockWrapper', 'MockWrapper.sol', pilot, [await stock.getAddress(), E(1.2)]);
+  const oracle = await deploy('PrivatePilotPrice', 'VadiumPrivatePilot.sol', pilot, [await wrapper.getAddress(), E(100)]);
+  const pool = await deploy('VadiumPrivatePilot', 'VadiumPrivatePilot.sol', pilot, [await stable.getAddress(), await wrapper.getAddress(), await oracle.getAddress(), await stock.getAddress(), who]);
+  const address = await pool.getAddress();
+  for (const [method, args] of [['supply', [1]], ['withdrawLiquidity', [1]], ['depositCollateral', [1]], ['withdrawCollateral', [1]], ['borrow', [1]], ['repay', [1]], ['liquidate', [who, 1]], ['writeOffBadDebt', [who]]]) {
+    await assert.rejects(pool.connect(stranger)[method].staticCall(...args), /PrivateParticipantOnly/);
+  }
+  const send = async (contract, method, ...args) => (await contract[method](...args, { gasLimit: 2000000 })).wait();
+  await send(stable, 'mint', who, 21000);
+  await send(stock, 'mint', who, E(0.001));
+  await send(stable, 'approve', address, 21000);
+  await send(pool, 'supply', 20000);
+  await assert.rejects(pool.supply.staticCall(1), /PilotCapExceeded/);
+  await send(stock, 'approve', await wrapper.getAddress(), E(0.001));
+  await send(wrapper, 'deposit', E(0.001), who);
+  const wrapped = await wrapper.balanceOf(who);
+  await send(wrapper, 'approve', address, wrapped);
+  await send(pool, 'depositCollateral', wrapped - 1n);
+  await assert.rejects(pool.borrow.staticCall(10001), /DebtCeilingExceeded/);
+  await send(pool, 'borrow', 5000);
+  await send(pool, 'setRiskPause', true, true);
+  await rpc.request({ method: 'evm_increaseTime', params: [8 * 86400] });
+  await rpc.request({ method: 'evm_mine', params: [] });
+  assert.equal((await oracle.currentRisk(await wrapper.getAddress()))[0], false);
+  await assert.rejects(pool.borrow.staticCall(1), /PilotExpired/);
+  await send(pool, 'depositCollateral', 1);
+  const debt = await pool.debtOf(who);
+  assert.ok(debt > 5000n);
+  await send(stable, 'approve', address, 6000);
+  await send(pool, 'repay', 6000);
+  assert.equal(await pool.debtOf(who), 0n);
+  await send(pool, 'withdrawCollateral', wrapped);
+  await send(wrapper, 'redeem', wrapped, who, who);
+  await send(pool, 'withdrawLiquidity', await pool.liquidityShares(who));
+  assert.equal(await pool.collateralOf(who), 0n);
+  assert.equal(await stable.balanceOf(address), 0n);
+  assert.equal(await stable.balanceOf(who), 21000n);
+  assert.ok(E(0.001) - await stock.balanceOf(who) <= 1n);
+  await provider.destroy();
+  await rpc.disconnect();
+});
 
 test('wallet detection supports OKX-only injection and falls back to a standard EVM wallet', () => {
   const okx = { request() {} };

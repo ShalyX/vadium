@@ -1,0 +1,12 @@
+[
+  {
+    "symbol": "NVDAx",
+    "status": 200,
+    "body": "{\"quote\":null}"
+  },
+  {
+    "symbol": "TSLAx",
+    "status": 200,
+    "body": "{\"quote\":null}"
+  }
+]

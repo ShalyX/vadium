@@ -1,0 +1,84 @@
+{
+  "checkedAt": "2026-09-26T19:00:45.381Z",
+  "authentication": "none",
+  "service": "redstone-primary-prod",
+  "sources": {
+    "gateway": "https://github.com/redstone-finance/redstone-oracles-monorepo/blob/main/packages/sdk/src/data-services-urls.ts",
+    "request": "https://github.com/redstone-finance/redstone-oracles-monorepo/blob/main/packages/sdk/src/fetch-data-packages.ts",
+    "protocol": "https://github.com/redstone-finance/redstone-oracles-monorepo/blob/main/packages/protocol/src/data-package/DataPackage.ts",
+    "signers": "https://github.com/redstone-finance/redstone-oracles-monorepo/blob/main/packages/evm-connector/contracts/data-services/PrimaryProdDataServiceConsumerBase.sol"
+  },
+  "productionConsumer": {
+    "uniqueSignersRequired": 3,
+    "authorizedSigners": [
+      "0x8bb8f32df04c8b654987daaed53d6b6091e3b774",
+      "0xdeb22f54738d54976c4c0fe5ce6d408e40d88499",
+      "0x51ce04be4b3e32572c4ec9135221d0691ba7d202",
+      "0xdd682daec5a90dd295d14da4b0bec9281017b5be",
+      "0x9c5ae89c4af6aa32ce58588dbaf90d18a855b6de"
+    ]
+  },
+  "readyForIntegration": false,
+  "results": [
+    {
+      "feed": "NVDA",
+      "url": "https://oracle-gateway.a.redstone.finance/v2/data-packages/latest-by-data-feeds/redstone-primary-prod?dataFeedIds=NVDA",
+      "httpStatus": 403,
+      "packagesReturned": 0,
+      "signatureVerified": false,
+      "verifiedPackages": 0,
+      "uniqueAuthorizedSigners": 0,
+      "verification": [],
+      "access": "access-denied",
+      "response": "{\"message\":\"Forbidden\"}"
+    },
+    {
+      "feed": "TSLA",
+      "url": "https://oracle-gateway.a.redstone.finance/v2/data-packages/latest-by-data-feeds/redstone-primary-prod?dataFeedIds=TSLA",
+      "httpStatus": 403,
+      "packagesReturned": 0,
+      "signatureVerified": false,
+      "verifiedPackages": 0,
+      "uniqueAuthorizedSigners": 0,
+      "verification": [],
+      "access": "access-denied",
+      "response": "{\"message\":\"Forbidden\"}"
+    },
+    {
+      "feed": "NVDAx",
+      "url": "https://oracle-gateway.a.redstone.finance/v2/data-packages/latest-by-data-feeds/redstone-primary-prod?dataFeedIds=NVDAx",
+      "httpStatus": 403,
+      "packagesReturned": 0,
+      "signatureVerified": false,
+      "verifiedPackages": 0,
+      "uniqueAuthorizedSigners": 0,
+      "verification": [],
+      "access": "access-denied",
+      "response": "{\"message\":\"Forbidden\"}"
+    },
+    {
+      "feed": "TSLAx",
+      "url": "https://oracle-gateway.a.redstone.finance/v2/data-packages/latest-by-data-feeds/redstone-primary-prod?dataFeedIds=TSLAx",
+      "httpStatus": 403,
+      "packagesReturned": 0,
+      "signatureVerified": false,
+      "verifiedPackages": 0,
+      "uniqueAuthorizedSigners": 0,
+      "verification": [],
+      "access": "access-denied",
+      "response": "{\"message\":\"Forbidden\"}"
+    },
+    {
+      "feed": "BTC",
+      "url": "https://oracle-gateway.a.redstone.finance/v2/data-packages/latest-by-data-feeds/redstone-primary-prod?dataFeedIds=BTC",
+      "httpStatus": 403,
+      "packagesReturned": 0,
+      "signatureVerified": false,
+      "verifiedPackages": 0,
+      "uniqueAuthorizedSigners": 0,
+      "verification": [],
+      "access": "access-denied",
+      "response": "{\"message\":\"Forbidden\"}"
+    }
+  ]
+}

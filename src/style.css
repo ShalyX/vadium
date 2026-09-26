@@ -304,6 +304,9 @@ main { width: 100%; max-width: none; min-height: calc(100vh - 70px); margin: 0; 
 .facility-ident { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
 .facility-ident span { display: block; color: #6c8880; font: 9px DM Mono, monospace; letter-spacing: .1em; }
 .facility-ident a { color: #0a625b; font: 12px DM Mono, monospace; text-decoration: none; word-break: break-all; }
+.facility-terms { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; border-top: 1px solid #d4e3d9; padding-top: 13px; }
+.facility-terms span { display: block; color: #6c8880; font: 9px DM Mono, monospace; letter-spacing: .1em; }
+.facility-terms strong { display: block; margin-top: 6px; color: #315c56; font: 11px DM Mono, monospace; }
 main[data-market]:not([data-market="demo"]) .start-panel,
 main[data-market]:not([data-market="demo"]) .quote-panel { display: none !important; }
 main[data-market]:not([data-market="demo"]) .connection-status { border-radius: 8px; }
@@ -451,6 +454,7 @@ footer { width: auto; max-width: none; margin: 0; padding: 18px 28px; background
   .start-panel { grid-template-columns: 1fr; padding: 20px; }
   .start-actions { display: grid; grid-template-columns: 1fr 1fr; }
   .start-actions button { min-width: 0; }
+  .facility-ident, .facility-terms { grid-template-columns: 1fr 1fr; }
   .proof-strip { grid-template-columns: repeat(2, 1fr); }
   .proof-strip div { border-bottom: 1px solid #d0ddd6 !important; }
   .position-panel, .risk-panel { padding: 22px 19px; }

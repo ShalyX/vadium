@@ -1,0 +1,152 @@
+{
+  "state": "passed",
+  "network": "X Layer testnet",
+  "chainId": 1952,
+  "mockAssets": true,
+  "mockVerifier": true,
+  "warning": "Rehearsal only. Does not prove real Chainlink signature verification or mainnet readiness.",
+  "addresses": {
+    "stable": "0x72b260b65881958455C5461bc035805338E5500D",
+    "underlying": "0x08adC1e107aaF685D2391420D24119B09608D8e9",
+    "MockWrapper": "0x7DC3708ff519cF687fA52427283ae4493b7Eef02",
+    "MockStreamsVerifier": "0x4dC525722d8CE03E421bcDEDeEb9720001002e00",
+    "VerifiedMarketRiskOracle": "0xD33CefE5EC95bAa5C0a111E9369E67F1555Bc980",
+    "VadiumCreditPool": "0xf85b2c5e44eEEd897E2eD708819EfA6E82Efb751"
+  },
+  "transactions": [
+    {
+      "label": "Deploy stable",
+      "hash": "0x8e7efc3182de934baa605204fbb8d8e1e788a63a3101288d66c84a86ea4348bb",
+      "block": 41967766
+    },
+    {
+      "label": "Deploy underlying",
+      "hash": "0x199b95534198edc26b5dca260a1e89a2be214ddcbf9f72c20efe0b7350a36223",
+      "block": 41967772
+    },
+    {
+      "label": "Deploy MockWrapper",
+      "hash": "0x8d94cc20d8e6535774fbac5868b9060990ee5ca7c40933fdf7f73791195e2e88",
+      "block": 41967778
+    },
+    {
+      "label": "Deploy MockStreamsVerifier",
+      "hash": "0x0f5e1c027b06cf31e167084f36ad93723521b2ea073eac497602ddf9b795bb58",
+      "block": 41967786
+    },
+    {
+      "label": "Deploy VerifiedMarketRiskOracle",
+      "hash": "0x3c72aa94c97d4ba076cb6a0ee87f914d238e96e8d317e4e4195edad10d90075b",
+      "block": 41967794
+    },
+    {
+      "label": "Deploy VadiumCreditPool",
+      "hash": "0xd7dc7bec8c8daef5e442607010d48f6e6742b8b4bb9ba16687ff23d0f6024e70",
+      "block": 41967801
+    },
+    {
+      "label": "Authorize rehearsal publisher",
+      "hash": "0x1060aece8724afcdbd5c57cfd583168636e96a73149f9b4b061433d8ecebcaa0",
+      "block": 41967808
+    },
+    {
+      "label": "Mint demo liquidity",
+      "hash": "0x83f4c51d26c10452b85d12c4febcb769079da2421e0dfe3667857f430c22a0a8",
+      "block": 41967815
+    },
+    {
+      "label": "Mint demo repayment reserve",
+      "hash": "0xc3de74919b1590a6ad1f7923022f90fefa366df6eb111839a50f27189d800f2b",
+      "block": 41967821
+    },
+    {
+      "label": "Mint demo collateral",
+      "hash": "0xaa7792be21beb1c7abf55502490efd44e380b3b2ad72b16df825f0fff686f74f",
+      "block": 41967828
+    },
+    {
+      "label": "Approve demo supply",
+      "hash": "0x512aa30f607f07e0906db1bb92630d3004aecd7b7d1e7b9b5fb6142a2bbdf110",
+      "block": 41967833
+    },
+    {
+      "label": "Supply 2 dUSDG",
+      "hash": "0x3064abb2b3011a5d2d8c4fcdf8f34bfed5693a19789e2c4f0e48370936507434",
+      "block": 41967840
+    },
+    {
+      "label": "Approve wrapping",
+      "hash": "0x651c085e6e1e70364451d42827783bb33f1eebd6191cf26b9e8aa6131ac60d31",
+      "block": 41967847
+    },
+    {
+      "label": "Wrap 0.012 demo equity",
+      "hash": "0xe7da37e5152e6835775cfe88487178f75d6a11dfbfcc5c9b6f7ef5b94d40acaf",
+      "block": 41967854
+    },
+    {
+      "label": "Approve collateral",
+      "hash": "0x0a6fb946a341bad47b6d77737cc0b590d55edb9b7528217efadc4748ece77536",
+      "block": 41967959
+    },
+    {
+      "label": "Deposit wrapped collateral",
+      "hash": "0xc229ff5ed761cc204a030a1f1617a794ee7c1c9908c07afd41d1000210087f83",
+      "block": 41967965
+    },
+    {
+      "label": "Load mock v10 report",
+      "hash": "0x04ffc5196d4ade5f6c33dcb56b0ec69457b78b5650fd2b041e0b26354e7243c7",
+      "block": 41967972
+    },
+    {
+      "label": "Publish through report adapter",
+      "hash": "0x0bd217b07e8d8e3138d6b283b17f23e8f1360200e124a063d1c70448682145e0",
+      "block": 41967978
+    },
+    {
+      "label": "Draw 0.5 dUSDG",
+      "hash": "0xdb7a317c6bf8b1e14af158256e59e478f962851cc959483f17180152bc392c7c",
+      "block": 41967985
+    },
+    {
+      "label": "Pause new credit and supplies",
+      "hash": "0x611147d780f3bb0f9ecca15417fefbef45cef9f01d787d0ca0592051e6388068",
+      "block": 41968070
+    },
+    {
+      "label": "Approve bounded full repayment",
+      "hash": "0x970316f1012b598e251cda24293a498fbdb5966b7f643945cd0c77298f9b1686",
+      "block": 41968082
+    },
+    {
+      "label": "Repay principal and interest during pause",
+      "hash": "0xa8bc000faafafad1b4cfab5ce452cea8eb3a819583482b9e805d70c2614a9819",
+      "block": 41968089
+    },
+    {
+      "label": "Withdraw all collateral",
+      "hash": "0x3841a3b5de08881fbc17b173325cd49190f3e4385c846927483c2df783823c59",
+      "block": 41968101
+    },
+    {
+      "label": "Unwrap all shares",
+      "hash": "0x6344edb71442ce11cf4623e2972b3c2855c1fa5afec3ded4d4b6d56c247233eb",
+      "block": 41968107
+    },
+    {
+      "label": "Redeem lender principal and earnings",
+      "hash": "0x4200f294bef14ee82de097182aefb490ac29f752cbd453034c7d6101b2bea5d2",
+      "block": 41968118
+    }
+  ],
+  "reconciliation": {
+    "borrowed": "0.5",
+    "repaid": "0.500001",
+    "lenderReturned": "2.000001",
+    "finalDebt": "0",
+    "finalCollateral": "0",
+    "underlyingReturned": "0.012",
+    "finalPoolCash": "0"
+  }
+}

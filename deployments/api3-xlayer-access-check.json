@@ -1,0 +1,10 @@
+{
+  "checkedAt": "2026-09-26T17:48:58.969Z",
+  "source": "https://raw.githubusercontent.com/api3dao/contracts/main/deployments/addresses.json",
+  "chainId": 196,
+  "matchingDeployments": {},
+  "api3ServerPresent": false,
+  "verifiedEquityFeed": false,
+  "mainnetReady": false,
+  "limitation": "Current official deployment map only; absence does not prove no historical deployment exists."
+}

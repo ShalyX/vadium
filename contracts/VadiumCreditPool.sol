@@ -96,6 +96,9 @@ contract VadiumCreditPool {
         unlocked = 1;
     }
 
+    /// @dev Extension point for permanently restricted private pilots.
+    function _beforeAction(bytes4, uint256) internal virtual {}
+
     modifier onlyOwner() {
         if (msg.sender != owner) revert NotOwner();
         _;
@@ -224,6 +227,7 @@ contract VadiumCreditPool {
     }
 
     function supply(uint256 assets) external nonReentrant returns (uint256 shares) {
+        _beforeAction(msg.sig, assets);
         if (supplyPaused) revert Paused();
         if (assets == 0) revert ZeroAmount();
         _accrueInterest();
@@ -237,6 +241,7 @@ contract VadiumCreditPool {
     }
 
     function withdrawLiquidity(uint256 shares) external nonReentrant returns (uint256 assets) {
+        _beforeAction(msg.sig, shares);
         if (shares == 0) revert ZeroAmount();
         if (shares > liquidityShares[msg.sender]) revert InsufficientShares();
         _accrueInterest();
@@ -249,6 +254,7 @@ contract VadiumCreditPool {
     }
 
     function depositCollateral(uint256 amount) external nonReentrant {
+        _beforeAction(msg.sig, amount);
         if (amount == 0) revert ZeroAmount();
         collateralOf[msg.sender] += amount;
         _safeTransferFrom(collateral, msg.sender, address(this), amount);
@@ -256,6 +262,7 @@ contract VadiumCreditPool {
     }
 
     function withdrawCollateral(uint256 amount) external nonReentrant {
+        _beforeAction(msg.sig, amount);
         if (amount == 0) revert ZeroAmount();
         collateralOf[msg.sender] -= amount;
         if (debtOf(msg.sender) != 0) {
@@ -268,6 +275,7 @@ contract VadiumCreditPool {
     }
 
     function borrow(uint256 amount) external nonReentrant {
+        _beforeAction(msg.sig, amount);
         if (borrowPaused) revert Paused();
         if (amount == 0) revert ZeroAmount();
         _accrueInterest();
@@ -285,6 +293,7 @@ contract VadiumCreditPool {
     }
 
     function repay(uint256 amount) external nonReentrant returns (uint256 paid) {
+        _beforeAction(msg.sig, amount);
         if (amount == 0) revert ZeroAmount();
         _accrueInterest();
         uint256 shares = debtSharesOf[msg.sender];
@@ -328,6 +337,7 @@ contract VadiumCreditPool {
     }
 
     function liquidate(address borrower, uint256 requestedRepay) external nonReentrant returns (uint256 repaid, uint256 seized) {
+        _beforeAction(msg.sig, requestedRepay);
         if (requestedRepay == 0) revert ZeroAmount();
         _accrueInterest();
         (bool available, MarketRiskOracle.Risk memory risk) = oracle.currentRisk(address(collateral));
@@ -379,6 +389,7 @@ contract VadiumCreditPool {
     }
 
     function writeOffBadDebt(address borrower) external nonReentrant returns (uint256 loss) {
+        _beforeAction(msg.sig, 0);
         if (collateralOf[borrower] != 0) revert HealthyPosition();
         _accrueInterest();
         loss = _writeOffBadDebt(borrower);

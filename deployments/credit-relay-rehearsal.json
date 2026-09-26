@@ -1,0 +1,360 @@
+{
+  "mode": "LOCAL_TEST_FIXTURES_ONLY",
+  "chainId": 1337,
+  "mainnetTransactions": 0,
+  "generatedAt": "2026-09-26T19:22:16.959Z",
+  "completed": true,
+  "stableDecimals": 6,
+  "wrapperAssetsPerShare": "1200000000000000000",
+  "contracts": {
+    "stable": "0xc3aba1682DAd7ef824c1CBE0E8fF09C3A31CaFDd",
+    "stock": "0x1509eb6110509cd38a532aF108b667bD7d088442",
+    "wrapper": "0x20d5686daD65ff3944bc5B98b3FF45262c6EAbd6",
+    "oracle": "0xE45Ed9e61494A491312dC8866cb2491553A40dB9",
+    "facility": "0x694ad2c3b386e0D6692a0d40905BAB1698FFf50b"
+  },
+  "interestPaid": "54809",
+  "lenderReceived": "1000054809",
+  "receipts": [
+    {
+      "step": "deploy-MockERC20",
+      "hash": "0xe3fbf1694205cc0b570b0feac51847e01dd9f25f2f936d2f9a479f212385ab48",
+      "status": 1,
+      "blockNumber": 1,
+      "blockHash": "0xee5a5b03959faad6d7f9c3850c3554c445388dda8b8e977a42b904ed6123f463",
+      "gasUsed": "462840"
+    },
+    {
+      "step": "deploy-MockERC20",
+      "hash": "0x1d56b130dba36dfee256e6a6e1e37485016f00b3fadf6844bf425cdbbcd0ca08",
+      "status": 1,
+      "blockNumber": 2,
+      "blockHash": "0xd9e3a023e1dd0e41ced24cdfceb840dce0ef342ded1d92d3ba445c80487a10d2",
+      "gasUsed": "462864"
+    },
+    {
+      "step": "deploy-MockWrapper",
+      "hash": "0x514f79400713e8bcadbb3de968aa68d5a3b9130422d1fcfe00a10278d772e2b0",
+      "status": 1,
+      "blockNumber": 3,
+      "blockHash": "0x440126689598997981da1a4f8bb3016d8a9a1abef24cd1b45ba52d354f6c22e5",
+      "gasUsed": "765940"
+    },
+    {
+      "step": "deploy-MarketRiskOracle",
+      "hash": "0x4dc07e639beb8a06945018d4a83b2b9a82d3ac91c5e9accda8f7f54e68f92b4e",
+      "status": 1,
+      "blockNumber": 4,
+      "blockHash": "0xfa2729fbdd20847cd07f97d79cbb1938e1967fe67443b69e85d37453c6c911ac",
+      "gasUsed": "972586"
+    },
+    {
+      "step": "deploy-VadiumCreditPool",
+      "hash": "0x61e3838a0a95610e7f27e4f180742e64723b4fd83d48e5c23e7836eed24cdcb5",
+      "status": 1,
+      "blockNumber": 5,
+      "blockHash": "0xc91c3aa428aa0a0389afd0b097f7e33112fac32696f77210a3eaec7a8f094794",
+      "gasUsed": "2711566"
+    },
+    {
+      "step": "authorize-local-publisher",
+      "hash": "0xea753a2a2a5314abe84bcc93626dcf6a1c03ffaa57afa9588a8918030c0d052a",
+      "status": 1,
+      "blockNumber": 6,
+      "blockHash": "0x6d543963fc822dde28659d8f780727d5ea111ef5333c70afbcd940097172a5d9",
+      "gasUsed": "47870"
+    },
+    {
+      "step": "mint-local-lender-funds",
+      "hash": "0x56395b9b15f8441743becc917ea41e71851072a813b85574c7a24f85e994c11e",
+      "status": 1,
+      "blockNumber": 7,
+      "blockHash": "0xa20cd09ec7b9d17e02a116ec346541c2de18b62d767f576be0d2fe06eecbf494",
+      "gasUsed": "68250"
+    },
+    {
+      "step": "mint-local-interest-budget",
+      "hash": "0x1a59b8047de47ad8d607bf1aeac8ec51f38439242ae36c1d2daec5d4bff8135d",
+      "status": 1,
+      "blockNumber": 8,
+      "blockHash": "0x3e4eaeaadca224aa0477931b6d4c411d9dafc86bee8c77bf7d7cfd1d4e1732cf",
+      "gasUsed": "51150"
+    },
+    {
+      "step": "mint-local-equity",
+      "hash": "0x58407291e2a8b2d2a366be3a4b0819b95feec1c092308181baedc7f2b381ed45",
+      "status": 1,
+      "blockNumber": 9,
+      "blockHash": "0xc04670a0c1a84724cfc96ecb419bd20e32e7e9717b983251357bf20e4882b784",
+      "gasUsed": "68286"
+    },
+    {
+      "step": "approve-supply",
+      "hash": "0xd0db7171193d39b4dd15284c2d0662c01d4edeca85923f4fa4b22c8efaf3623f",
+      "status": 1,
+      "blockNumber": 10,
+      "blockHash": "0xa01308610f6f05203d13ee3e77822ee9af4b51ba2a6b271b539eacd519fe9bf1",
+      "gasUsed": "46119"
+    },
+    {
+      "step": "supply",
+      "hash": "0x71ab6d8ea9fff9d1b27dfc212278c5042aeb7be9158f8171e6a8360d4769d037",
+      "status": 1,
+      "blockNumber": 11,
+      "blockHash": "0x206872a5fa264a59dcdda93956aa69a30aa009d05b2237443d5c75a778a36f78",
+      "gasUsed": "114843"
+    },
+    {
+      "step": "approve-wrap",
+      "hash": "0x74d50e9b7211e4cb1790afcf75eb949280c51856ea6bdc00c14e2c8acd3bc884",
+      "status": 1,
+      "blockNumber": 12,
+      "blockHash": "0x8f9639dcb8ba5946cc57379638b381f180bd7488c2bf3337b50204c9168261e8",
+      "gasUsed": "46155"
+    },
+    {
+      "step": "wrap",
+      "hash": "0xadfb272f62bfd720d6f8988331c3b96eabc991405beac007b523159cee00975f",
+      "status": 1,
+      "blockNumber": 13,
+      "blockHash": "0x71c23fb9fac4e937dbccfb33cb3e5244ca93ae93c5213e7a1f72b8d6c24a602f",
+      "gasUsed": "99498"
+    },
+    {
+      "step": "approve-collateral",
+      "hash": "0x5040a04725bdb8c1e7e9959282735ee4d17de0bd2c38ddc5e1dbbe2c8ba50eac",
+      "status": 1,
+      "blockNumber": 14,
+      "blockHash": "0x9e499a63518841e4a154e4c68280e7f82fb98d16efcb866d1d554bc17c0e5b9c",
+      "gasUsed": "46199"
+    },
+    {
+      "step": "deposit",
+      "hash": "0x70d8867726138c8a9c4c7e74d78daf5e7f59611a6b4e655fcfe036824fdef4bd",
+      "status": 1,
+      "blockNumber": 15,
+      "blockHash": "0x016569108f9414bbbda7f61b33ff84a71d4e795de109eb1d553d305c49875184",
+      "gasUsed": "88818"
+    },
+    {
+      "step": "borrow",
+      "hash": "0xa40b14f4331afcd6447438cf928732b1f45732b5a2a865a532f788d0079aaba2",
+      "status": 1,
+      "blockNumber": 18,
+      "blockHash": "0x2b778421d20155e5e38e45ea62f31480e1fc969a9aa6b73eb26e881e5f6daf91",
+      "gasUsed": "125057"
+    },
+    {
+      "step": "borrow-blocked-during-outage",
+      "hash": "0x8a080115c4e44f9f667d28796f3b511114384f0c178e06c8f2021f1a84cfff2c",
+      "status": 0,
+      "blockNumber": 22,
+      "blockHash": "0x6cd5a4e8463e171a4384063f856a182482348dc04366ef03f99eb1bd76244220",
+      "gasUsed": "63813"
+    },
+    {
+      "step": "top-up-during-outage",
+      "hash": "0x46eb242387ca0fe96b57dd4323d5e55f4c04627c4ed2c55ac988f4b51af10e1e",
+      "status": 1,
+      "blockNumber": 23,
+      "blockHash": "0xeac5289c5bfeeabfdf9ce6dec7979f7f6700aed0dd1310fbc07a1f377aa361e2",
+      "gasUsed": "45935"
+    },
+    {
+      "step": "approve-repayment",
+      "hash": "0x99cbb18dcbde4c77e56b89ac8b7b104713a8e4187c64becc3472eca7b6cae2b3",
+      "status": 1,
+      "blockNumber": 24,
+      "blockHash": "0x15af4dad25a8e9156786efeb0a406b9fa36a938a795f068189ff058d3bc00267",
+      "gasUsed": "46119"
+    },
+    {
+      "step": "partial-repayment-during-outage",
+      "hash": "0xdc26c9f6eda93d951e6fad5ae1178571a903250e4a1ec3737b3eca36e49e6751",
+      "status": 1,
+      "blockNumber": 25,
+      "blockHash": "0xebb3b33d5e9c88b849ff1f89293b2b41d90c45501af7d603912c7139e5a639a5",
+      "gasUsed": "84027"
+    },
+    {
+      "step": "redraw-after-recovery",
+      "hash": "0xbec82f0582c7cbae4a113ae2235855de116ef0d22b6c71f64ba424d3ab1cc9a7",
+      "status": 1,
+      "blockNumber": 28,
+      "blockHash": "0x0c5e37e2130118f898571d4e944cc60c085e9d0e3dfb9601c23dc5bd816b5078",
+      "gasUsed": "98413"
+    },
+    {
+      "step": "full-repayment-during-outage",
+      "hash": "0x3e9e3d41b5427c44612c4924862042d3f756924e6b7e91f32c7a4dae1ece7c36",
+      "status": 1,
+      "blockNumber": 31,
+      "blockHash": "0x1217675755293e5d1ccabaee96d1a48cce8f00ee8fc65aeae298f9017aafe126",
+      "gasUsed": "65823"
+    },
+    {
+      "step": "withdraw-during-outage",
+      "hash": "0x8206906e84c3e95988cdda7eebd861ab19e8c3ff39bd1fd780623dba88300a8b",
+      "status": 1,
+      "blockNumber": 32,
+      "blockHash": "0xf87eb1b9d448ec9a9eb71a36e55fea208d63b888e59e09c91f5c7a37e0ae6c29",
+      "gasUsed": "63070"
+    },
+    {
+      "step": "unwrap",
+      "hash": "0xbaaf29d0c22ab1dc3d3e7c6c60ef14fcac9461ee0685d88dd8d38f8915b31df0",
+      "status": 1,
+      "blockNumber": 33,
+      "blockHash": "0x30bab1d2b38585737f280e1782cf422bad6e93d34400b1afed9939783b798bb4",
+      "gasUsed": "56035"
+    },
+    {
+      "step": "redeem-lender-shares",
+      "hash": "0xc04b2bf1b2e70233e0bcdb070545273dfcc3e77e853901068d2ad673961932c5",
+      "status": 1,
+      "blockNumber": 34,
+      "blockHash": "0x385eda1af8ccadc4cf9d26215962db0a150f2c9da3f3ac67245c564a5a18a7b1",
+      "gasUsed": "66520"
+    }
+  ],
+  "snapshots": [
+    {
+      "stage": "borrowed",
+      "debt": "200000000",
+      "collateralShares": "9000000000000000000",
+      "borrowCapacity": "702000000",
+      "lenderShares": "1000000000",
+      "cash": "800000000",
+      "oracleAvailable": true
+    },
+    {
+      "stage": "outage",
+      "debt": "200054804",
+      "collateralShares": "9000000000000000000",
+      "borrowCapacity": "0",
+      "lenderShares": "1000000000",
+      "cash": "800000000",
+      "oracleAvailable": false
+    },
+    {
+      "stage": "recovered-and-redrawn",
+      "debt": "175054807",
+      "collateralShares": "10000000000000000000",
+      "borrowCapacity": "780000000",
+      "lenderShares": "1000000000",
+      "cash": "825000000",
+      "oracleAvailable": true
+    },
+    {
+      "stage": "closed",
+      "debt": "0",
+      "collateralShares": "0",
+      "borrowCapacity": "0",
+      "lenderShares": "0",
+      "cash": "0",
+      "oracleAvailable": false
+    }
+  ],
+  "relay": {
+    "binding": {
+      "chainId": 1337,
+      "genesis": "0x0687aa84981089f5a39f53c4dec1432a5ff7b118d8a73f394e96ae38cd3fdecc",
+      "oracleAddress": "0xE45Ed9e61494A491312dC8866cb2491553A40dB9",
+      "asset": "0x20d5686daD65ff3944bc5B98b3FF45262c6EAbd6",
+      "symbol": "NVDAx",
+      "publisher": "0x3Ba9824F04e0D1b376a3086D25AeD0b490535580"
+    },
+    "receipts": [
+      {
+        "hash": "0xea061baabcb5157df15f31a315a65a8efd8a5aaab197632745509a3355084879",
+        "nonce": 0,
+        "status": "confirmed",
+        "blockNumber": 17,
+        "blockHash": "0xb379c27f5ff40ff5c79f78f2c61e1f1f224dc9d32835aecf05dafac0a6ea8831",
+        "gasUsed": "76452",
+        "risk": {
+          "price": "100000000000000000000",
+          "freshnessBps": 10000,
+          "liquidityBps": 10000,
+          "asOf": 1790450535,
+          "state": 0,
+          "inputsHash": "0x153757b355ba9f6dd71428c2b59f23acfb5d438055282f28a4ad0cdb36dea415"
+        },
+        "input": {
+          "source": "LOCAL_TEST_FIXTURE",
+          "symbol": "NVDAx",
+          "priceUsd": "100",
+          "session": "open",
+          "sourceObservedAt": 1790450535
+        }
+      },
+      {
+        "hash": "0x365cd4ad450fea0174358602e67aeb27346b4b2362e43fad4889cb05566791f4",
+        "nonce": 1,
+        "status": "confirmed",
+        "blockNumber": 21,
+        "blockHash": "0xf5eaef8e07e0f2f784a4c0dac52f492b05e7aa9f0258e33c95f4871991ab678e",
+        "gasUsed": "42134",
+        "risk": {
+          "price": "0",
+          "freshnessBps": 0,
+          "liquidityBps": 0,
+          "asOf": 1790536938,
+          "state": 2,
+          "inputsHash": "0xb3da42a998233f2f5783409d0b25ba65ada7e100276f734cfde838aff9ce2c4a"
+        },
+        "input": {
+          "source": "LOCAL_TEST_FIXTURE",
+          "symbol": "NVDAx",
+          "quote": null,
+          "reason": "SIMULATED_FEED_OUTAGE"
+        }
+      },
+      {
+        "hash": "0x6bbc83fef919a41b316a26db9c0d9ae6d818565ec0e919f3518248c964827c66",
+        "nonce": 2,
+        "status": "confirmed",
+        "blockNumber": 27,
+        "blockHash": "0xf3d26151b933f0c7149a6b2cc3063194b3e6ac818d75b241b6138fd29e21a930",
+        "gasUsed": "42252",
+        "risk": {
+          "price": "100000000000000000000",
+          "freshnessBps": 10000,
+          "liquidityBps": 10000,
+          "asOf": 1790536941,
+          "state": 0,
+          "inputsHash": "0xdc85f4682db59b06f8065ae01bc98cdfed9aacbec3fa998744236c96042702af"
+        },
+        "input": {
+          "source": "LOCAL_TEST_FIXTURE",
+          "symbol": "NVDAx",
+          "priceUsd": "100",
+          "session": "open",
+          "sourceObservedAt": 1790536941
+        }
+      },
+      {
+        "hash": "0xa92b0a3a8ab9ce40dcebd71adfed725ec8def5261dc189db1219ce9d410526c6",
+        "nonce": 3,
+        "status": "confirmed",
+        "blockNumber": 30,
+        "blockHash": "0x2d47d3b9d4b3a5f5225d8ac60586cc88c6ecf6795f3994c077849f2e1e8697be",
+        "gasUsed": "42134",
+        "risk": {
+          "price": "0",
+          "freshnessBps": 0,
+          "liquidityBps": 0,
+          "asOf": 1790536943,
+          "state": 2,
+          "inputsHash": "0xb3da42a998233f2f5783409d0b25ba65ada7e100276f734cfde838aff9ce2c4a"
+        },
+        "input": {
+          "source": "LOCAL_TEST_FIXTURE",
+          "symbol": "NVDAx",
+          "quote": null,
+          "reason": "SIMULATED_FEED_OUTAGE"
+        }
+      }
+    ]
+  }
+}

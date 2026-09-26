@@ -1,0 +1,59 @@
+{
+  "runId": "2026-09-26T18-22-16.955Z-796db751-63dd-4a89-be2e-b466b128c27c",
+  "directory": "deployments\\issuer-relay\\2026-09-26T18-22-16.955Z-796db751-63dd-4a89-be2e-b466b128c27c",
+  "results": [
+    {
+      "symbol": "NVDAx",
+      "chainId": 196,
+      "collateral": "0xa8ddb5cd96b5222afe198316e9a57caa642850d5",
+      "publishable": false,
+      "trustModel": "operator-relayed-unsigned-issuer-api",
+      "indicativePrice18": null,
+      "sourceObservedAt": null,
+      "reasons": [
+        "PRICE_TIMEOUT"
+      ],
+      "inputsHash": "0x25beaafabb0012d1434270b801cd2dfafc7896a4a4f99b63a56a9476632d319b",
+      "outageDraft": {
+        "price": "0",
+        "freshnessBps": 0,
+        "liquidityBps": 0,
+        "asOf": 1790446952,
+        "state": 2,
+        "inputsHash": "0x25beaafabb0012d1434270b801cd2dfafc7896a4a4f99b63a56a9476632d319b"
+      },
+      "outageCalldata": "0x2444567c000000000000000000000000a8ddb5cd96b5222afe198316e9a57caa642850d5000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000006ab80d68000000000000000000000000000000000000000000000000000000000000000225beaafabb0012d1434270b801cd2dfafc7896a4a4f99b63a56a9476632d319b",
+      "mode": "dry-run",
+      "transactionSent": false,
+      "oracleAddress": null,
+      "note": "Outage calldata only. No price publication, key loading or existing oracle change. Recompute timestamp against chain before any future authorized submission."
+    },
+    {
+      "symbol": "TSLAx",
+      "chainId": 196,
+      "collateral": "0xc3fdbe3a68ee5de461d30415a8165cf9aefe1171",
+      "publishable": false,
+      "trustModel": "operator-relayed-unsigned-issuer-api",
+      "indicativePrice18": null,
+      "sourceObservedAt": null,
+      "reasons": [
+        "METADATA_FETCH_FAILED",
+        "PRICE_FETCH_FAILED"
+      ],
+      "inputsHash": "0xb607c6bd21b96ead4008a829625ac0e58cf3d9345c65854695c0320b04f552aa",
+      "outageDraft": {
+        "price": "0",
+        "freshnessBps": 0,
+        "liquidityBps": 0,
+        "asOf": 1790446962,
+        "state": 2,
+        "inputsHash": "0xb607c6bd21b96ead4008a829625ac0e58cf3d9345c65854695c0320b04f552aa"
+      },
+      "outageCalldata": "0x2444567c000000000000000000000000c3fdbe3a68ee5de461d30415a8165cf9aefe1171000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000006ab80d720000000000000000000000000000000000000000000000000000000000000002b607c6bd21b96ead4008a829625ac0e58cf3d9345c65854695c0320b04f552aa",
+      "mode": "dry-run",
+      "transactionSent": false,
+      "oracleAddress": null,
+      "note": "Outage calldata only. No price publication, key loading or existing oracle change. Recompute timestamp against chain before any future authorized submission."
+    }
+  ]
+}

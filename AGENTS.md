@@ -1,5 +1,9 @@
 # Vadium agent guide
 
+## Explicit private pilot exception — 26 September 2026
+
+The user authorized a self-funded private mainnet loan rehearsal with operator-set test pricing and all evidence recorded. Only `VadiumPrivatePilot` may use this exception: immutable participant `0x1DcB045123730e606A88380BCe534332F50332d2`, lifetime 0.02 USDG supply cap, 0.01 USDG new-debt ceiling and seven-day supply/borrow window. See `docs/private-mainnet-pilot.md`. Do not extend this exception to public release or describe the synthetic price as a verified market feed. Keep all existing release gates for the public product.
+
 Read `HANDOFF.md`, `docs/credit-quality-benchmark.md`, and `docs/mainnet-release.md` before changing the lending contracts or release configuration.
 
 ## Product target
@@ -18,6 +22,16 @@ Read `HANDOFF.md`, `docs/credit-quality-benchmark.md`, and `docs/mainnet-release
 - Mainnet release requires real signed-report testing, market-specific risk limits, liquidity analysis, role separation, independent contract review, rights and jurisdiction review, and a capped end-to-end pilot. Keep release switches off until those gates are met.
 
 ## Workflow
+
+- Review packaging: `npm run package:review` creates a curated source/evidence directory and SHA-256 manifest under ignored `release/`. Keep internal handoff/personal instructions, credentials and browser session logs out of the archive. Review guide and demo script are in `docs/review-package.md` and `docs/demo-script.md`; a script is not a recorded video. Check the deployed version separately before claiming public launch readiness.
+
+- Combined credit/relay regression: `npm run rehearse:credit-relay` records the full local wrapped-collateral lifecycle with six-decimal stablecoin accounting, outage-safe top-up/repayment/exit, price recovery, redraw and lender-interest reconciliation. Preserve its fixture labels and separate local receipts from the completed real mainnet pilot evidence.
+
+- Local relay continuation: `npm run rehearse:relay` exercises durable signing, broadcast, recovery, outage and receipt recording on ephemeral chain 1337 only. `scripts/local-issuer-relay.mjs` rejects other chains with no mainnet override. Positive fixture reports are explicitly synthetic. Preserve this boundary; see `docs/issuer-relay.md` for journal recovery, including stale-lock handling after a forced process kill.
+
+- The user authorized building the issuer API relay after acknowledging operator-published pricing. First stage is `npm run check:issuer`: read-only collection, validation, evidence and local outage rehearsal. A real `/price-data` response returned `{ "quote": null }`; its documented schema has no source observation timestamp. Do not silently treat HTTP Date/fetch time as source freshness or enable a positive-price publication path without resolving that distinction. This authorization does not open public lending.
+
+- Oracle budget constraint: the user has an unfunded Chainlink account and has repeatedly ruled out paying for a subscription. Do not ask them to configure/fund Chainlink credentials as the default next step. Require actual verified feed availability before recommending another provider; chain compatibility or historical partnership announcements alone are insufficient. Do not replace the restricted synthetic-price pilot with unsigned API prices or claim a verified live oracle without evidence.
 
 - Current priority: make the real-asset mainnet flow usable before adding more product features. Work on wallet signing, a verified live oracle, the reviewed facility deployment, funded liquidity, and the complete wrap-to-repay pilot. Testnet remains internal validation.
 - Make changes on the `codex/mainnet-hardening` branch unless the user requests another branch.

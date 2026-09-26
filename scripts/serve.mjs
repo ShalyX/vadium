@@ -4,7 +4,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../public');
-const types = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css' };
+const types = { '.svg': 'image/svg+xml', '.json': 'application/json', '.png': 'image/png', '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css' };
 const rpcEndpoints = { '/rpc': 'https://testrpc.xlayer.tech', '/rpc/mainnet': 'https://rpc.xlayer.tech' };
 const readMethods = new Set(['eth_chainId', 'eth_blockNumber', 'eth_call', 'eth_getBalance', 'eth_getCode', 'eth_getBlockByNumber', 'eth_getTransactionCount', 'eth_getLogs', 'eth_feeHistory', 'eth_gasPrice']);
 

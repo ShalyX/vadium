@@ -14,3 +14,7 @@ deployments/*.local.json
 # Internal workspace docs & learnings
 LEARNINGS.md
 docs/dev-day*
+/pilot-evidence.json
+
+/output/
+/release/
