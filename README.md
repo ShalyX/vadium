@@ -1,12 +1,14 @@
 # Vadium
 
+The site opens at the [landing page](index.html). The [credit desk](app.html) contains the interactive testnet prototype, wrapper-only market views, and mainnet transaction proof; the [wrap desk](assets.html) inspects issuer tokens and V2 wrappers on X Layer mainnet.
+
 Vadium is building revolving USDG credit lines backed by wrapped tokenized equity positions on X Layer. The first release target is separate NVDAx and TSLAx facilities. The [credit quality benchmark](docs/credit-quality-benchmark.md) defines the borrower journey, interest and lender economics, coverage controls, and mainnet release gates. The current pool is a principal-only prototype: it changes new credit when the reference market is closed, price data is old, or onchain liquidity is thin, while keeping repayment and collateral top-ups available.
 
 **Release target:** a real wrapped xStock / USDG market on X Layer mainnet. The deployed testnet market is for testing. The current mainnet USDG pool uses permissionless demo collateral and is not the release pool. See the [mainnet release plan](docs/mainnet-release.md) for verified asset options, the required wrapper and oracle design, and remaining launch gates.
 
 ## X Layer tokenized-asset integration
 
-The [asset preparation desk](assets.html) reads the issuer's NVDAx and TSLAx tokens and current V2 ERC-4626 wrappers on X Layer mainnet. It checks contract code and `asset()` onchain, shows wrapper conversion estimates, and supports wallet-approved wrap and unwrap transactions. The credit workspace also exposes both assets as wrapper-only views. Neither wrapper is connected to an open Vadium USDG credit facility. Onchain reads and conversion previews were verified in the browser; a wallet-signed wrap transaction has not yet been recorded.
+The [asset preparation desk](assets.html) reads the issuer's NVDAx and TSLAx tokens and current V2 ERC-4626 wrappers on X Layer mainnet. It checks contract code and `asset()` onchain, shows wrapper conversion estimates, and supports wallet-approved wrap and unwrap transactions. The credit desk also exposes both assets as wrapper-only views. Neither wrapper is connected to an open Vadium USDG credit facility. Onchain reads and conversion previews were verified in the browser; a wallet-signed wrap transaction has not yet been recorded.
 
 ## Live X Layer testnet deployment
 

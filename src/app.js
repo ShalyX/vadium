@@ -682,16 +682,23 @@ ui.unwrapMax.addEventListener('click', () => {
 ui.wrapButton.addEventListener('click', () => { void executePrep('wrap'); });
 ui.unwrapButton.addEventListener('click', () => { void executePrep('unwrap'); });
 document.querySelectorAll('.tab').forEach((tab) => tab.addEventListener('click', () => selectAction(tab.dataset.action)));
-document.querySelectorAll('.market-link[data-market]').forEach((button) => button.addEventListener('click', () => { void selectMarket(button.dataset.market); }));
-document.querySelectorAll('[data-view-target]').forEach((button) => button.addEventListener('click', () => {
-  const view = button.dataset.viewTarget;
+function setView(view) {
+  if (!['position', 'market', 'proof'].includes(view)) return;
   ui.workspaceRoot.dataset.view = view;
   document.querySelectorAll('[data-view-target]').forEach((item) => {
     const active = item.dataset.viewTarget === view;
     item.classList.toggle('active', active);
     if (active) item.setAttribute('aria-current', 'page'); else item.removeAttribute('aria-current');
   });
+  const url = new URL(window.location.href);
+  url.hash = view === 'position' ? '' : view;
+  window.history.replaceState(null, '', url);
+}
+document.querySelectorAll('.market-link[data-market]').forEach((button) => button.addEventListener('click', () => {
+  setView('position');
+  void selectMarket(button.dataset.market);
 }));
+document.querySelectorAll('[data-view-target]').forEach((button) => button.addEventListener('click', () => setView(button.dataset.viewTarget)));
 window.ethereum?.on?.('accountsChanged', () => window.location.reload());
 window.ethereum?.on?.('chainChanged', () => window.location.reload());
 
@@ -801,7 +808,17 @@ async function loadAssetDesk(symbol, version = marketLoadVersion) {
   ui.startActions.hidden = true;
   ui.networkLabel.textContent = 'X Layer Mainnet';
   ui.marketName.textContent = `${market.symbol} wrapper / USDG`;
+  ui.wrapperLink.href = `${network.explorer}/address/${market.wrapper}`;
   ui.oracleLink.href = `${network.explorer}/address/${market.wrapper}`;
+  ui.oracleLink.textContent = 'View wrapper on X Layer ↗';
+  document.querySelector('.risk-heading .section-label').textContent = 'FACILITY STATUS';
+  document.querySelector('.session-state > span').textContent = 'CREDIT MARKET';
+  ui.updatedAt.textContent = 'NO CREDIT FACILITY';
+  ui.sessionValue.textContent = 'NO FACILITY';
+  ui.permissionValue.textContent = 'NOT DEPLOYED';
+  ui.marketPill.textContent = 'WRAP ONLY';
+  ui.marketPill.className = 'status-pill blocked';
+  ui.riskExplanation.textContent = 'The wrapper is being checked on X Layer. USDG credit is unavailable for this asset.';
   setMessage(`Checking ${market.symbol} and its V2 wrapper on X Layer…`);
   try {
     const localPreview = ['127.0.0.1', 'localhost'].includes(window.location.hostname);
@@ -816,6 +833,7 @@ async function loadAssetDesk(symbol, version = marketLoadVersion) {
         lastError = undefined;
         break;
       } catch (error) {
+        if (version !== marketLoadVersion) return;
         lastError = error;
         readProvider?.destroy?.();
         readProvider = undefined;
@@ -885,6 +903,11 @@ async function selectMarket(id) {
   refreshTimer = undefined;
   selectedMarket = id;
   ui.workspaceRoot.dataset.market = id;
+  const url = new URL(window.location.href);
+  if (id === 'demo') url.searchParams.delete('market');
+  else url.searchParams.set('market', id);
+  window.history.replaceState(null, '', url);
+  document.querySelector('.asset-route').href = id === 'demo' ? '/assets.html' : `/assets.html?asset=${id}`;
   document.querySelectorAll('.market-link[data-market]').forEach((item) => {
     const active = item.dataset.market === id;
     item.classList.toggle('active', active);
@@ -898,10 +921,13 @@ async function selectMarket(id) {
 async function init(version = ++marketLoadVersion) {
   if (!configured()) return setMessage('Contracts are not configured.', true);
   ui.facilityNotice.hidden = true;
+  document.querySelector('.risk-heading .section-label').textContent = 'ONCHAIN RISK STATE';
+  document.querySelector('.session-state > span').textContent = 'REFERENCE MARKET';
+  ui.oracleLink.textContent = 'View oracle on X Layer ↗';
   ui.assetIcon.textContent = 'A';
   ui.environmentTitle.textContent = 'Interactive testnet prototype';
   ui.environmentCopy.textContent = 'AAPLx and dUSD here are permissionless demo tokens with no real-world value. The separate USDG proof below uses real USDG on X Layer mainnet.';
-  ui.heroCopy.textContent = 'Track collateral, available credit and repayment from one position workspace.';
+  ui.heroCopy.textContent = 'Track collateral, available credit and repayment from one position.';
   ui.startTitle.textContent = 'Get started on testnet';
   ui.startCopy.innerHTML = 'Connect a wallet on X Layer testnet. Mint demo AAPLx to borrow, or mint demo dUSD to supply liquidity. Need gas? <a href="https://web3.okx.com/xlayer/faucet" target="_blank" rel="noreferrer">Get testnet OKB ↗</a>';
   ui.startActions.hidden = false;
@@ -964,6 +990,7 @@ async function init(version = ++marketLoadVersion) {
         activeRpcUrl = providerUrl;
         break;
       } catch (error) {
+        if (version !== marketLoadVersion) return;
         lastError = error;
         marketDetails = undefined;
         readProvider?.destroy();
@@ -1037,4 +1064,7 @@ async function init(version = ++marketLoadVersion) {
 }
 
 setPending(false);
-init();
+setView(window.location.hash.slice(1) || 'position');
+const initialMarket = new URLSearchParams(window.location.search).get('market');
+if (initialMarket === 'NVDAx' || initialMarket === 'TSLAx') void selectMarket(initialMarket);
+else void init();

@@ -7,8 +7,9 @@ const MAINNET_RPC = XLAYER.rpcUrl;
 const tokenAbi = ['function symbol() view returns(string)', 'function decimals() view returns(uint8)', 'function balanceOf(address) view returns(uint256)', 'function allowance(address,address) view returns(uint256)', 'function approve(address,uint256) returns(bool)'];
 const wrapperAbi = [...tokenAbi, 'function asset() view returns(address)', 'function convertToAssets(uint256) view returns(uint256)', 'function previewDeposit(uint256) view returns(uint256)', 'function previewRedeem(uint256) view returns(uint256)', 'function maxDeposit(address) view returns(uint256)', 'function maxRedeem(address) view returns(uint256)', 'function deposit(uint256,address) returns(uint256)', 'function redeem(uint256,address,address) returns(uint256)'];
 const $ = (id) => document.getElementById(id);
-const ui = Object.fromEntries(['connectButton','assetTitle','assetState','tokenLink','wrapperLink','backingValue','rawBalance','shareBalance','wrapTab','unwrapTab','amountLabel','amountInput','maxButton','preview','actionButton','status','transactionLink'].map((id) => [id, $(id)]));
-let selected = 'NVDAx';
+const ui = Object.fromEntries(['connectButton','creditDeskLink','assetTitle','assetState','tokenLink','wrapperLink','backingValue','rawBalance','shareBalance','wrapTab','unwrapTab','amountLabel','amountInput','maxButton','preview','actionButton','status','transactionLink'].map((id) => [id, $(id)]));
+const requestedAsset = new URLSearchParams(window.location.search).get('asset');
+let selected = Object.hasOwn(ASSETS, requestedAsset) ? requestedAsset : 'NVDAx';
 let mode = 'wrap';
 let readProvider;
 let walletProvider;
@@ -77,9 +78,11 @@ async function loadAsset() {
   ui.rawBalance.textContent = account ? 'Loading…' : 'Connect wallet';
   ui.shareBalance.textContent = account ? 'Loading…' : 'Connect wallet';
   ui.amountInput.value = '';
+  ui.amountLabel.textContent = mode === 'wrap' ? `${selected} amount` : 'Wrapped shares to redeem';
   ui.preview.textContent = 'Enter an amount to see the onchain wrapper estimate.';
   ui.transactionLink.hidden = true;
   const entry = ASSETS[selected];
+  ui.creditDeskLink.href = `/app.html?market=${selected}`;
   ui.tokenLink.href = `${EXPLORER}/address/${entry.token}`;
   ui.tokenLink.textContent = short(entry.token);
   ui.wrapperLink.href = `${EXPLORER}/address/${entry.wrapper}`;
@@ -237,6 +240,9 @@ function selectMode(nextMode) {
 document.querySelectorAll('[data-asset]').forEach((button) => button.addEventListener('click', () => {
   if (pending || selected === button.dataset.asset) return;
   selected = button.dataset.asset;
+  const url = new URL(window.location.href);
+  url.searchParams.set('asset', selected);
+  window.history.replaceState(null, '', url);
   document.querySelectorAll('[data-asset]').forEach((item) => {
     const active = item.dataset.asset === selected;
     item.classList.toggle('selected', active);
@@ -257,4 +263,9 @@ ui.connectButton.addEventListener('click', () => { void connect(); });
 ui.actionButton.addEventListener('click', () => { void execute(); });
 window.ethereum?.on?.('accountsChanged', () => window.location.reload());
 window.ethereum?.on?.('chainChanged', () => window.location.reload());
+document.querySelectorAll('[data-asset]').forEach((item) => {
+  const active = item.dataset.asset === selected;
+  item.classList.toggle('selected', active);
+  item.setAttribute('aria-pressed', String(active));
+});
 void loadAsset();

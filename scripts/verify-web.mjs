@@ -4,10 +4,13 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-for (const file of ['index.html', 'assets.html', 'deployment-config.js', 'src/app.js', 'src/assets.js', 'src/assets.css', 'src/markets.js', 'src/style.css']) {
+for (const file of ['index.html', 'app.html', 'assets.html', 'deployment-config.js', 'src/app.js', 'src/assets.js', 'src/assets.css', 'src/landing.css', 'src/markets.js', 'src/style.css']) {
   assert.ok(fs.statSync(path.join(root, file)).size > 0, `${file} is missing or empty`);
 }
-const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+const landing = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+assert.match(landing, /href="\/app\.html"/);
+assert.match(landing, /src\/landing\.css/);
+const html = fs.readFileSync(path.join(root, 'app.html'), 'utf8');
 assert.match(html, /deployment-config\.js/);
 assert.match(html, /src\/app\.js/);
 assert.match(html, /src\/style\.css/);

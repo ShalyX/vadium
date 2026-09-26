@@ -312,6 +312,7 @@ main[data-market]:not([data-market="demo"]) .collateral-prep { display: block; o
 main[data-market]:not([data-market="demo"]) .position-panel,
 main[data-market]:not([data-market="demo"]) .proof-strip { display: none !important; }
 main[data-market]:not([data-market="demo"]) .market-grid { grid-template-columns: 1fr; }
+main[data-market]:not([data-market="demo"]) .risk-panel .rail-item { display: none; }
 main[data-market]:not([data-market="demo"]) .terminal { order: 4; }
 main[data-market]:not([data-market="demo"])[data-view="proof"] .collateral-prep,
 main[data-market]:not([data-market="demo"])[data-view="proof"] .facility-notice { display: none !important; }
