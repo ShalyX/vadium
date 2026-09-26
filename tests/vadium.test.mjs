@@ -275,7 +275,7 @@ test('Credit facility isolates two borrowers and shares a realized loss across t
   assert.equal(await f.facility.totalDebt(), 0n);
 });
 
-test('Credit facility exposes a blocked dust liquidation when collateral value rounds to zero', async () => {
+test('Credit facility settles zero-valued wrapper dust and records only the unpaid debt as lender loss', async () => {
   const f = await fixture();
   const borrower = await f.borrower.getAddress();
   const wrapper = await deploy('MockWrapper', 'MockWrapper.sol', f.owner, [await f.stock.getAddress(), E(1)]);
@@ -299,11 +299,72 @@ test('Credit facility exposes a blocked dust liquidation when collateral value r
     inputsHash: ethers.keccak256(ethers.toUtf8Bytes('dust-after')),
   })).wait();
   assert.equal(await facility.isLiquidatable(borrower), true);
-  await assert.rejects(facility.connect(f.liquidator).liquidate.staticCall(borrower, E(1_000)));
-  await assert.rejects(facility.writeOffBadDebt.staticCall(borrower));
+  await f.provider.send('evm_increaseTime', [6 * 3600 + 2]);
+  await f.provider.send('evm_mine', []);
+  await assert.rejects(facility.connect(f.liquidator).liquidate.staticCall(borrower, ethers.MaxUint256));
   assert.equal(await facility.collateralOf(borrower), E(10));
+  const freshAsOf = (await f.provider.getBlock('latest')).timestamp;
+  await (await f.oracle.connect(f.publisher).publish(await wrapper.getAddress(), {
+    price: 1n, freshnessBps: 10_000, liquidityBps: 10_000, asOf: freshAsOf, state: 0,
+    inputsHash: ethers.keccak256(ethers.toUtf8Bytes('dust-refreshed')),
+  })).wait();
   const debt = await facility.debtOf(borrower);
   assert.ok(debt >= E(1_000) && debt < E(1_001));
+  await (await f.stable.connect(f.liquidator).approve(await facility.getAddress(), 1n)).wait();
+  await assert.rejects(facility.connect(f.liquidator).liquidate.staticCall(borrower, 1n));
+  assert.equal(await facility.connect(f.liquidator).liquidate.staticCall(borrower, ethers.MaxUint256).then((result) => result[0]), 1n);
+  const lenderAssetsBefore = await facility.totalAssets();
+  const liquidatorStableBefore = await f.stable.balanceOf(await f.liquidator.getAddress());
+  const liquidatorWrapperBefore = await wrapper.balanceOf(await f.liquidator.getAddress());
+  const receipt = await (await facility.connect(f.liquidator).liquidate(borrower, ethers.MaxUint256, { gasLimit: 1_000_000 })).wait();
+  const loss = receipt.logs.map((log) => {
+    try { return facility.interface.parseLog(log); } catch { return null; }
+  }).find((log) => log?.name === 'BadDebtWrittenOff');
+  assert.ok(loss.args.amount >= debt - 1n && loss.args.amount < debt + E(1) - 1n);
+  assert.equal(await f.stable.balanceOf(await f.liquidator.getAddress()), liquidatorStableBefore - 1n);
+  assert.equal(await wrapper.balanceOf(await f.liquidator.getAddress()), liquidatorWrapperBefore + E(10));
+  assert.equal(await facility.collateralOf(borrower), 0n);
+  assert.equal(await facility.debtOf(borrower), 0n);
+  assert.equal(await facility.totalDebtShares(), 0n);
+  const lenderAssetsAfter = await facility.totalAssets();
+  assert.ok(lenderAssetsAfter <= lenderAssetsBefore && lenderAssetsBefore - lenderAssetsAfter <= loss.args.amount);
+  await assert.rejects(facility.connect(f.borrower).withdrawCollateral.staticCall(1n));
+});
+
+test('Credit facility dust settlement uses one atomic USDG unit with six decimals', async () => {
+  const f = await fixture();
+  const borrower = await f.borrower.getAddress();
+  const stable = await deploy('MockERC20', 'MockERC20.sol', f.owner, ['USDG test', 'USDG', 6]);
+  const wrapper = await deploy('MockWrapper', 'MockWrapper.sol', f.owner, [await f.stock.getAddress(), E(1)]);
+  const facility = await deploy('VadiumCreditPool', 'VadiumCreditPool.sol', f.owner, [
+    await stable.getAddress(), await wrapper.getAddress(), await f.oracle.getAddress(),
+    await f.stock.getAddress(), 6_500, 8_000, 7_500, 5_000, 3_000, 500, 1_000, 1_000_000_000_000n,
+  ]);
+  await (await stable.mint(await f.lender.getAddress(), 20_000_000_000n)).wait();
+  await (await stable.mint(await f.liquidator.getAddress(), 1n)).wait();
+  await (await stable.connect(f.lender).approve(await facility.getAddress(), 20_000_000_000n)).wait();
+  await (await stable.connect(f.liquidator).approve(await facility.getAddress(), 1n)).wait();
+  await (await wrapper.mint(borrower, E(10))).wait();
+  await (await wrapper.connect(f.borrower).approve(await facility.getAddress(), E(10))).wait();
+  await (await f.oracle.connect(f.publisher).publish(await wrapper.getAddress(), {
+    price: E(200), freshnessBps: 10_000, liquidityBps: 10_000, asOf: f.now, state: 0,
+    inputsHash: ethers.keccak256(ethers.toUtf8Bytes('six-decimal-before')),
+  })).wait();
+  await (await facility.connect(f.lender).supply(20_000_000_000n, { gasLimit: 1_000_000 })).wait();
+  await (await facility.connect(f.borrower).depositCollateral(E(10))).wait();
+  await (await facility.connect(f.borrower).borrow(1_000_000_000n, { gasLimit: 1_000_000 })).wait();
+  await (await wrapper.setAssetsPerShare(1n)).wait();
+  await (await f.oracle.connect(f.publisher).publish(await wrapper.getAddress(), {
+    price: 1n, freshnessBps: 10_000, liquidityBps: 10_000, asOf: f.now + 1, state: 0,
+    inputsHash: ethers.keccak256(ethers.toUtf8Bytes('six-decimal-after')),
+  })).wait();
+  await assert.rejects(facility.connect(f.liquidator).liquidate.staticCall(borrower, 1n));
+  assert.equal(await facility.connect(f.liquidator).liquidate.staticCall(borrower, ethers.MaxUint256).then((result) => result[0]), 1n);
+  await (await facility.connect(f.liquidator).liquidate(borrower, ethers.MaxUint256, { gasLimit: 1_000_000 })).wait();
+  assert.equal(await stable.balanceOf(await f.liquidator.getAddress()), 0n);
+  assert.equal(await wrapper.balanceOf(await f.liquidator.getAddress()), E(10));
+  assert.equal(await facility.debtOf(borrower), 0n);
+  assert.equal(await facility.totalDebtShares(), 0n);
 });
 
 async function deploy(name, file, signer, args = []) {

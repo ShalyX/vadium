@@ -36,12 +36,12 @@ The product promise is **access USDG while retaining the tokenized position, sub
 | Borrower coverage and liquidation price | Added to the browser; calculated from the current usable onchain price and wrapper conversion. |
 | Accrued interest and lender return | Implemented in a new local-only facility candidate. Nominal APR compounds per second; tests cover long idle periods and accrual-call independence. No deployment or independent review. |
 | Maintenance call, alerting, and cure workflow | Warning view added; formal call policy and monitored alerts missing. |
-| Bad-debt treatment and constrained liquidation | Local candidate writes off debt after collateral exhaustion. Tests cover repeat liquidation, collateral bounds, two borrowers, and two lenders. [Internal liquidation review](liquidation-review.md) records an unresolved dust deadlock and missing close-factor policy. Independent review remains open. |
+| Bad-debt treatment and constrained liquidation | Local candidate writes off debt after collateral exhaustion. Tests cover repeat liquidation, collateral bounds, two borrowers, and two lenders. A full-close dust path now prevents debt from being stranded when collateral value rounds to zero, but its liquidator recovery and lender loss policy needs independent review. [Internal liquidation review](liquidation-review.md) records the remaining close-factor and reserve decisions. |
 | Real signed oracle operations and audited mainnet launch | Missing. |
 
 ## Next implementation order
 
-1. Resolve the dust liquidation deadlock and define close factor, reserve, and loss allocation terms for the **local credit candidate**. Add decimal-combination and stateful invariants, then obtain an independent review. Keep the deployed demo pool as evidence; do not migrate funds through it.
+1. Review the local candidate's dust settlement economics and define close factor, reserve, and loss allocation terms. Expand decimal-combination and stateful invariants, then obtain an independent review. Keep the deployed demo pool as evidence; do not migrate funds through it.
 2. Add explicit facility terms and risk states to the UI. Show interest owed, nominal APR with per-second compounding, maintenance buffer, and cure actions before enabling a draw.
 3. Exercise real signed X Layer reports, controlled oracle publication, and market-specific limits for the separately verified NVDAx and TSLAx V2 wrappers in a safe integration environment.
 4. Complete rights and jurisdiction review, a capped mainnet pilot, reconciliation, and monitored release.

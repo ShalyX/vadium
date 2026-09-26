@@ -81,6 +81,7 @@ contract VadiumCreditPool {
     error RiskLimit();
     error DebtCeilingExceeded();
     error HealthyPosition();
+    error FullCloseRequired();
     error TransferFailed();
     error UnexpectedTransferAmount();
     error Reentrancy();
@@ -335,6 +336,22 @@ contract VadiumCreditPool {
 
         uint256 borrowerShares = debtSharesOf[borrower];
         uint256 borrowerDebt = _debtFromShares(borrowerShares, borrowIndexRay);
+        // At stablecoin precision, this collateral cannot fund even one unit of
+        // repayment. Foreclose it for one unit so the residual debt can be
+        // written off without leaving collateral that the borrower can reclaim.
+        if (_collateralValue(collateralOf[borrower], risk.price) == 0) {
+            if (requestedRepay < borrowerDebt) revert FullCloseRequired();
+            repaid = 1;
+            seized = collateralOf[borrower];
+            collateralOf[borrower] = 0;
+            debtSharesOf[borrower] = 0;
+            totalDebtShares -= borrowerShares;
+            _safeTransferFrom(stable, msg.sender, address(this), repaid);
+            _safeTransfer(collateral, msg.sender, seized);
+            emit Liquidated(borrower, msg.sender, repaid, seized);
+            emit BadDebtWrittenOff(borrower, borrowerDebt - repaid);
+            return (repaid, seized);
+        }
         uint256 burnShares = requestedRepay >= borrowerDebt
             ? borrowerShares : requestedRepay * RAY / borrowIndexRay;
         if (burnShares == 0) revert ZeroAmount();

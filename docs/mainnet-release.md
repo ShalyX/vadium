@@ -47,7 +47,7 @@ The signed report does not supply a defensible X Layer liquidation-depth score. 
 - [ ] Test against a real signed X Layer report, then build monitored publication with bounded retries and outage alerts. Store raw publication inputs so onchain commitments can be independently checked.
 - [x] Add a pool pause for new supplies and borrows while keeping repay and collateral top-ups available in the local contract.
 - [ ] Assign pool and oracle ownership to separate controlled roles and document incident procedures.
-- [ ] Audit the new pool, oracle integration, wrapper assumptions, liquidation rounding, token behavior, and bad-debt handling. The [internal liquidation review](liquidation-review.md) records adversarial test coverage and unresolved dust, close-factor, and reserve policies; independent review remains required.
+- [ ] Audit the new pool, oracle integration, wrapper assumptions, liquidation rounding, token behavior, and bad-debt handling. The [internal liquidation review](liquidation-review.md) records a local dust settlement candidate and unresolved economics, close-factor, and reserve policies; independent review remains required.
 - [ ] Review issuer distribution restrictions and the product's own legal and operating requirements for intended regions. [Issuer product terms](https://assets.backed.fi/products/apple-xstock) identify restricted jurisdictions.
 - [ ] Deploy a new mainnet pool with the verified wrapper and USDG, verify source code and ownership, and publish the exact addresses. Never reuse the demo-collateral mainnet pool as the release market.
 - [ ] Run a capped end-to-end mainnet transaction path with real assets, reconcile balances and events, and inspect the deployed site before enabling wider deposits.
